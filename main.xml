@@ -1,202 +1,77 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Module specificationVersion="1.3">
-<ModulePrefs title="AI Assistant" height="130" scrolling="true">
-    <Require feature="com.ibm.rdm.rm.api"/>
-    <Require feature="dynamic-height"/>
+<ModulePrefs title="Hello World v1.0" height="130" scrolling="true">
+	<Require feature="com.ibm.rdm.rm.api"/>
+	<Require feature="dynamic-height"/>
 </ModulePrefs>
 
 <Content type="html">
-    <![CDATA[
-        <html>
-            <head>
-                <!-- Language settings -->
-                <meta charset="utf-8">
-                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />    
-                <script type="text/javascript" src="https://dev.neohost.se/ibm-extensions/FormatManager1.3b4/lang_en.js" charset="utf-8"></script>        
-    
-                <!-- Importing bootstrap and jQuery -->
-                <script src="https://dev.neohost.se/ibm-extensions/FormatManager1.3b4/js/jquery-3.6.1.js?cb=" + new Date().getTime()></script>
-                <link href="https://dev.neohost.se/ibm-extensions/FormatManager1.3b4/css/bootstrap.min.css" rel="stylesheet">
-                <script src="https://dev.neohost.se/ibm-extensions/FormatManager1.3b4/js/bootstrap.bundle.min.js"></script>
+	<![CDATA[
+		<html>
+			<head>
+				<!-- Language settings -->
+				<meta charset="utf-8">
+				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />	
+				<script type="text/javascript" src="lang_en.js" charset="utf-8"></script>		
+				
+				<!-- Importing bootstrap and jQuery -->
+				<script src="js/jquery-3.6.1.js"></script>
+				<link href="css/bootstrap.min.css" rel="stylesheet">
+				<script src="js/bootstrap.bundle.min.js"></script>
 
-                <script>
-                let selArt_ref = [];
-                
-                RM.Event.subscribe(RM.Event.ARTIFACT_SELECTED, onSelection); // Use the RM library to deal with DNG
-                
-                function onSelection(artifacts) 
-                {
-                    selArt_ref = artifacts;
-                }
-                
-                function adjustHeight() //to recall each time we update the UI
-                {
-                    gadgets.window.adjustHeight();
-                }
-                
-                function onBodyLoad() 
-                {
-					const message = document.createElement('h3');
-					message.textContent = "AI Results:";
-					document.body.appendChild(message);
+				<!-- Custom JS-code -->
+				<script src="./js/main.js" charset="utf-8"></script>
+				
+				<style>
+					#container::-webkit-scrollbar {
+  						-webkit-appearance: none;
+  						width: 7px;
+					}
+
+					#container::-webkit-scrollbar-thumb {
+  						border-radius: 4px;
+  						background-color: rgba(0, 0, 0, .5);
+  						-webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+					}
+				</style>
+			</head>
+			<body onload='onBodyLoad();'>
+				<div class="d-grid gap-2 mx-2" style='margin-bottom: 3px;'>
+				
+					<table style='margin-top: 5px;'>
+						<tr>
+							<td style='text-align: center; font-size:12px;'><a onclick='show_instructions();' style='color:#00F; text-decoration: underline;' id='instructions_button'><span id='str001'></span></a></td>
+							<td style='text-align: center; font-size:12px;'><a onclick='show_settings();' style='color:#00F; text-decoration: underline;' id='settings_button'><span id='str002'></span></a></td>
+						</tr>
+					</table>
+
+					<hr style='padding: 0 !important; margin: 0 !important;'/>
+
+					<div style="font-size:12px; display: none;" id='instructions_div'>
+						<b><span id='str003'></span> </b> <span id='str004'></span> <br/>
+						<ol>
+							<li> <span id='str005'></span> </li>
+							<li> <span id='str006'></span> </li>
+							<li> <span id='str007'></span></li>
+						</ol>
+
+						<hr style='padding: 0 !important; margin: 0 !important;'/>
+					</div>
 					
-					const resultText = document.createElement('div');
-					resultText.id = 'aiResultText';
-					resultText.innerHTML = "This is where the AI results will be displayed.";
-					document.body.appendChild(resultText);
-                    
-                    loadLanguage(); //load the text according to the language file set in main.xml
-                    adjustHeight(); 
-                }
-                
-                function stripHTML(html) {
-                    let doc = new DOMParser().parseFromString(html, 'text/html');
-                    return doc.body.textContent || "";
-                }
+					<div style="font-size:12px; display: none;" id='settings_div'>
+						<b> <span id='str008'></span> </b> <span id='str009'>  </span>
+						<hr style='padding: 0 !important; margin: 0 !important;'/>
+					</div>
 
-                async function callOpenAIAPI(cleanText, apiKey, promptType) {
-                    const endpoint = 'https://api.openai.com/v1/chat/completions';
+					<div style="font-size:12px;">
+						<b><span id='str010' hidden></span></b>
+						<div style="overflow-y: scroll; max-height:80px; background-color:#EEE;" id='container'></div>
+					</div>
 
-                    let prompt = '';
-                    if (promptType === 'quality') {
-                        prompt = `Analyze the following requirement based on INCOSE standards and provide the following outputs:
-						1. **Original Requirement:** Analyze the given requirement and provide a **quality score** based on the INCOSE standards for requirement quality.
-						2. **Better Formulation:** Suggest a **revised version** of the requirement that addresses any deficiencies.
-						3. **Revised Requirement Score:** Provide a **quality score** for the newly formulated requirement according to INCOSE standards.
-						4. **Lacking INCOSE Features:** Identify and list the **INCOSE requirement quality features** that were lacking in the original requirement (e.g., clarity, verifiability, feasibility, traceability, etc.).
-						5. **Explanation of Deficiencies:** Provide an **explanation** of the primary deficiency in the original requirement, and outline what was improved in the revised version to meet INCOSE standards.
-
-						The analysis should be structured as follows. Note ¤ characters are used for formatting so don't skip them.:
-						---
-						¤**Original Requirement:**
-						¤- [Insert original requirement]
-
-						¤**Quality Score (INCOSE Standard):** [Score]
-
-						¤**<strong>Better Formulation:</strong>**
-						¤- [Revised requirement]
-
-						¤**<strong>Revised Requirement Score:</strong>** [Score]
-
-						¤**<strong>Lacking INCOSE Features:</strong>**
-						¤- [List of missing features]
-
-						¤**<strong>Explanation of Deficiency and Improvement:</strong>**
-						¤- [Detailed explanation of what was deficient in the original requirement and how the revised version addresses it]
-												
-						Original Requirement: 
-						
-						${cleanText}								
-						 `;
-                    } else if (promptType === 'basel') {
-                        prompt = `Convert the following requirement to FDA style requirement: ${cleanText}`;
-                    } else if (promptType === 'testcase') {
-                        prompt = `Generate a test case for the following requirement. 
-						The Test Case should be structured as follows. Note ¤ characters are used for formatting so don't skip them.:
-						---
-						¤**Test Case Title:**
-						[Test purpose and description]
-
-						¤**Test Steps**
-						¤- [Action, Data, Expected Result]
-
-						Original Requirement:
-						
-						: ${cleanText}`;
-                    }
-
-                    try {
-                        const response = await fetch(endpoint, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${apiKey}`,
-                            },
-                            body: JSON.stringify({
-                                model: 'gpt-4o-mini',
-                                messages: [
-                                    { role: 'system', content: 'You are an expert in requirement analysis and test generation.' },
-                                    { role: 'user', content: prompt }
-                                ],
-                                max_tokens: 750
-                            }),
-                        });
-
-                        const data = await response.json();
-                        return data.choices[0].message.content;
-                    } catch (error) {
-                        console.error('Error calling OpenAI API:', error);
-                        return 'Error analyzing the requirement.';
-                    }
-                }
-
-                function readArtefact(promptType) {
-                    if (selArt_ref == undefined || selArt_ref.length == 0) {
-                        alert('No text artifacts selected.');
-                        return;
-                    }
-
-                    const apiKey = document.getElementById('apiKeyInput').value; // Get the API key from the input field
-
-                    if (!apiKey) {
-                        alert('Please enter your OpenAI API key.');
-                        return;
-                    }
-
-                    let primaryText = "";
-                    
-                    // Fetch artifact data
-                    RM.Data.getAttributes(selArt_ref, [RM.Data.Attributes.PRIMARY_TEXT], async function(res) {
-                        let primaryText = res.data[0].values["http://www.ibm.com/xmlns/rdm/types/PrimaryText"];
-                        let cleanText = stripHTML(primaryText);
-                        // alert('Original Requirement Text: ' + cleanText);
-						document.getElementById('aiResultText').innerHTML = "Processing...";
-
-                        // Call OpenAI API for the appropriate prompt type
-                        let result = await callOpenAIAPI(cleanText, apiKey, promptType);
-						let formattedResult = result.replaceAll('¤**', '<br><strong>');
-						formattedResult = formattedResult.replaceAll('**', '</strong>');
-						formattedResult = formattedResult.replaceAll('¤-', '<br>-');
-
-                        // Display the result
-						document.getElementById('aiResultText').innerHTML = formattedResult;
-
-                        adjustHeight();
-                        <!-- alert(formattedResult, '<br>', result); -->
-                    });
-                }
-                </script>
-
-                <style>
-                    #container::-webkit-scrollbar {
-                        -webkit-appearance: none;
-                        width: 7px;
-                    }
-
-                    #container::-webkit-scrollbar-thumb {
-                        border-radius: 4px;
-                        background-color: rgba(0, 0, 0, .5);
-                        -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
-                    }
-                </style>
-            </head>
-            <body onload='onBodyLoad();'>
-                <div class="d-grid gap-2 mx-2" style='margin-bottom: 3px;'> 
-                    <!-- Buttons -->
-                    <div>
-                        <button type="button" style="font-size:12px;" onclick="readArtefact('quality');">Analyze Requirement</button>
-                        <button type="button" style="font-size:12px;" onclick="readArtefact('basel');">Convert to FDA Style</button>
-                        <button type="button" style="font-size:12px;" onclick="readArtefact('testcase');">Generate Test Case</button>
-                    </div>
-
-                    <!-- Text box for entering OpenAI API key -->
-                    <div>
-                        <label for="apiKeyInput" style="font-size:12px;">Enter your OpenAI API key:</label>
-                        <input type="text" id="apiKeyInput" style="width: 100%;" placeholder="API Key"/>
-                    </div>
-                </div>
-            </body>
-        </html>
-    ]]>
+					<button type="button" style="font-size:12px;" class="btn btn-danger" onclick="mainButton_onclick();" id="button1"><span id='str011'></span></button>
+				</div>
+			</body>
+		</html>
+	]]>
 </Content>
 </Module>
