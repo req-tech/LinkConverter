@@ -1,44 +1,64 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Module specificationVersion="1.3">
-<ModulePrefs title="Hello World v1.0" height="130" scrolling="true">
+<ModulePrefs title="Link Converter" height="130" scrolling="true">
 	<Require feature="com.ibm.rdm.rm.api"/>
 	<Require feature="dynamic-height"/>
+	
 </ModulePrefs>
 
 <Content type="html">
 	<![CDATA[
-		<html>
-			<head>
-				<!-- Language settings -->
-				<meta charset="utf-8">
-				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />	
-				<script type="text/javascript" src="lang_en.js" charset="utf-8"></script>		
-				
+		<!DOCTYPE html>
+			<html lang="en">
+            <head>
+                <!-- Language settings -->
+                <meta charset="utf-8">
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />    
+				<script type="text/javascript" src="./lang_en.js" charset="utf-8"></script>       
+    
 				<!-- Importing bootstrap and jQuery -->
 				<script src="js/jquery-3.6.1.js"></script>
 				<link href="css/bootstrap.min.css" rel="stylesheet">
 				<script src="js/bootstrap.bundle.min.js"></script>
 
-				<!-- Custom JS-code -->
-				<script src="./js/main.js" charset="utf-8"></script>
-				
-				<style>
-					#container::-webkit-scrollbar {
-  						-webkit-appearance: none;
-  						width: 7px;
-					}
+                <!-- Custom JS-code -->
+				<script type="text/javascript" src="./js/main.js" charset="utf-8"></script> 
 
-					#container::-webkit-scrollbar-thumb {
-  						border-radius: 4px;
-  						background-color: rgba(0, 0, 0, .5);
-  						-webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
-					}
-				</style>
-			</head>
-			<body onload='onBodyLoad();'>
-				<div class="d-grid gap-2 mx-2" style='margin-bottom: 3px;'>
-				
-					<table style='margin-top: 5px;'>
+
+
+
+
+                <style>
+                    #container::-webkit-scrollbar {
+                        -webkit-appearance: none;
+                        width: 7px;
+                    }
+
+                    #container::-webkit-scrollbar-thumb {
+                        border-radius: 4px;
+                        background-color: rgba(0, 0, 0, .5);
+                        -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+                    }
+                    table {
+                        font-family: arial, sans-serif;
+                        border-collapse: collapse;
+                        width: 100%;
+                        }
+
+                        td, th {
+                        border: 1px solid #dddddd;
+                        text-align: left;
+                        padding: 4px;
+                        }
+
+                        tr:nth-child(even) {
+                        background-color: #dddddd;
+                    }
+                </style>
+            </head>
+			<body onload="onBodyLoad()">
+
+					<table style='margin-top: 5px; border: 0'>
 						<tr>
 							<td style='text-align: center; font-size:12px;'><a onclick='show_instructions();' style='color:#00F; text-decoration: underline;' id='instructions_button'><span id='str001'></span></a></td>
 							<td style='text-align: center; font-size:12px;'><a onclick='show_settings();' style='color:#00F; text-decoration: underline;' id='settings_button'><span id='str002'></span></a></td>
@@ -59,19 +79,37 @@
 					</div>
 					
 					<div style="font-size:12px; display: none;" id='settings_div'>
-						<b> <span id='str008'></span> </b> <span id='str009'>  </span>
+						<b><span id='str008'>  </span> </b><br/>
+                        <label for="apiKeyInput" style="font-size:12px;">OpenAI API key</label>
+                        <input type="password" id="apiKeyInput" style="width: 100%;" placeholder="API Key"/>
+                        <button type="button" style="font-size:12px;" onclick="saveApiKeyAsCookie();">Save Key on this computer as Cookie</button>
+                        <button type="button" style="font-size:12px;" onclick="removeApiKeyCookie();">Remove Cookie</button>
 						<hr style='padding: 0 !important; margin: 0 !important;'/>
-					</div>
 
-					<div style="font-size:12px;">
-						<b><span id='str010' hidden></span></b>
-						<div style="overflow-y: scroll; max-height:80px; background-color:#EEE;" id='container'></div>
 					</div>
+				<!-- Main button to trigger the process -->
+				<button style="font-size:12px; id="readLinksButton" onclick="readLinksButton_onclick()">Read Links</button>
 
-					<button type="button" style="font-size:12px;" class="btn btn-danger" onclick="mainButton_onclick();" id="button1"><span id='str011'></span></button>
-				</div>
+				<!-- Main button to trigger the process -->
+				<button style="font-size:12px; id="convertLinksButton" onclick="convertLinksButton_onclick()">Convert Links to Base Links</button>
+
+				<!-- Div for output messages -->
+				<div id="container" style="font-size:12px;></div>
+
+				<!-- Checkbox for selecting all links -->
+				<label>
+					<input type="checkbox" id="selectAllLinksCheckbox" onclick="toggleSelectAllLinks()">
+					Select All Links
+				</label> 
+				
+				<!-- Div for additional messages or loading indicator -->
+				<div id="str010" style="font-size:12px; style="display: none;">Loading...</div>
+
 			</body>
-		</html>
-	]]>
+			</html>
+
+		
+		
+			]]>
 </Content>
 </Module>
