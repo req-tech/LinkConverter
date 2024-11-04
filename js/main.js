@@ -1,17 +1,16 @@
 // Initialize GLOBAL variables
-let selArt_ref = [];
-let availableLinks = []; // Store available links to convert
+const widgetHandler = {
+    selArtRef: [],
+    availableLinks: [],
+    targetContext: "base", // default context
+    selectAllLinks: false,
+};
 
-// Initialize selected link types and target context
-let selectedLinkTypes = [];
-let targetContext = "base"; // default context
-let selectAllLinks = false; // new option for selecting all links
-
-RM.Event.subscribe(RM.Event.ARTIFACT_SELECTED, onSelection); // Use the RM library to deal with DNG
+// Subscribe to artifact selection event
+RM.Event.subscribe(RM.Event.ARTIFACT_SELECTED, onSelection);
 
 function onSelection(artifacts) {
-    selArt_ref = artifacts;
-    // alert("Selected artifact: " + JSON.stringify(selArt_ref[0]));
+    widgetHandler.selArtRef = artifacts || [];
 }
 
 function adjustHeight() {
@@ -20,203 +19,194 @@ function adjustHeight() {
 
 function onBodyLoad() {
     loadLanguage(); // Load the text according to the language file set in main.xml
-
-    var ro = new ResizeObserver(entries => {
-        adjustHeight();
-    });
-
-    ro.observe(document.getElementById('button1')); // adjustHeight() is also called when the user changes the width of the main button (i.e., the width of the widget)
-    adjustHeight(); // Update the height since we updated the UI with loadLanguage();
-}
-
-function show_instructions() {
-    let instructions_div = document.getElementById('instructions_div');
-    let instructions_button = document.getElementById('instructions_button');
-
-    if (instructions_div.style.display == 'none') {
-        instructions_div.style.display = "block";
-        instructions_button.innerHTML = 'Hide Instructions';
-    } else {
-        instructions_div.style.display = "none";
-        instructions_button.innerHTML = 'Show Instructions';
-    }
-
     adjustHeight();
 }
 
-function show_settings() {
-    let settings_div = document.getElementById('settings_div');
-    let settings_button = document.getElementById('settings_button');
-
-    if (settings_div.style.display == 'none') {
-        settings_div.style.display = "block";
-        settings_button.innerHTML = 'Hide Settings';
+function toggleVisibility(divId, buttonId, showText, hideText) {
+    const div = document.getElementById(divId);
+    const button = document.getElementById(buttonId);
+    if (div.classList.contains("hidden")) {
+        div.classList.remove("hidden");
+        button.innerHTML = hideText;
     } else {
-        settings_div.style.display = "none";
-        settings_button.innerHTML = 'Show Settings';
+        div.classList.add("hidden");
+        button.innerHTML = showText;
     }
-
     adjustHeight();
 }
 
 function readLinksButton_onclick() {
-    document.getElementById("str010").style.display = "block";
-    if (selArt_ref == undefined || selArt_ref.length == 0) {
-        setContainerText("container", 'No text artifact selected.');
+    // document.getElementById("str010").style.display = "block";
+    setContainerText("statusContainer", 'Loading...');
+    if (!widgetHandler.selArtRef || widgetHandler.selArtRef.length === 0) {
+        setContainerText("statusContainer", 'No text artifact selected.');
         return;
     }
-
-    RM.Data.getAttributes(selArt_ref, function(res) {
-        if (res.code === RM.OperationResult.OPERATION_OK && res.data.length > 0) {
-            let title_array = [];
-            for (let i = 0; i < res.data.length; i++) {
-                if (res.data[i].values['http://www.ibm.com/xmlns/rdm/types/ArtifactFormat'] == 'Text') {
-                    let title = res.data[i].values["http://purl.org/dc/terms/title"];
-                    if (title != null) {
-                        title_array.push(title);
-                    }
-                }
-            }
-            setContainerText("container", title_array);
-        } else {
-            setContainerText("container", 'No text artifact selected.');
-        }
-
-        // Fetch links for the selected artifact
-        readLinks(selArt_ref);
-        
-    });
+    readLinks(widgetHandler.selArtRef);
+    setContainerText("statusContainer", 'Select Link types to convert.');
 }
 
-function readLinks(artifacts) {
-    artifacts.forEach(artifact => {
+async function readLinks(artifacts) {
+    widgetHandler.availableLinks = [];
+    for (const artifact of artifacts) {
         if (!artifact.moduleUri) {
             console.error('Module URI not found for artifact:', artifact);
             setContainerText("container", 'Module URI not found for selected artifact.');
-            return;
+            continue;
         }
-
-        getLinks(artifact).then(links => {
-            availableLinks = links;
-            // alert("Available links: " + JSON.stringify(availableLinks));
-            displayLinkOptions(links);
-        }).catch(error => {
+        try {
+            const links = await getLinks(artifact);
+            widgetHandler.availableLinks.push(...links);
+        } catch (error) {
             console.error('Error fetching links:', error);
             setContainerText("container", 'Error fetching links. Please check the artifact URI or permissions.');
-        });
-    });
+        }
+    }
+    displayLinkOptions(widgetHandler.availableLinks);
 }
 
 function displayLinkOptions(links) {
-    let containerHTML = '<form id="linkOptionsForm">';
+    const linkContainer = document.getElementById("linkContainer"); // Changed to update only the link part of the container
+    const form = document.createElement("form");
+    form.id = "linkOptionsForm";
+
     links.forEach((link, index) => {
-        // console.log('Link:', link);
-        // console.log(JSON.stringify(link));
-        // Shallow copy of the link object
-        let linkTypeString = link.linktype;
-        // linkType = link.linktype;
-        if (typeof link.linktype === 'object') {
-            // alert("Link type is an object: " + JSON.stringify(linkType));
-            linkTypeString = link.linktype.uri.split('/').pop();
-        } else {
-            linkTypeString = link.linktype;
-        }
-        // Check if there is Baselinks in the link
-        // Split the URL by '/' and get the last part
+        const linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
         const lastPart = link.art.uri.split('/').pop();
-        // Check if the last part starts with 'TX'
-        if (lastPart.startsWith('TX')) {
-            console.log('Baselink found -> skipping.');
-        } else { 
-            // containerHTML += `<input type="checkbox" id="link_${index}" name="link" value="${index}"> ${link.linktype} - ${link.targets.map(target => target.uri).join(', ')}<br>`;
-            containerHTML += `<input type="checkbox" id="link_${index}" name="link" value="${index}"> ${linkTypeString}<br>`;
+        if (!lastPart.startsWith('TX')) {
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = `link_${index}`;
+            checkbox.name = "link";
+            checkbox.value = index;
+            checkbox.classList.add("link-checkbox");
+            checkbox.addEventListener("click", (e) => {
+                e.stopPropagation();
+                updateSelectAllCheckboxState();
+            });
+
+            const label = document.createElement("label");
+            label.htmlFor = `link_${index}`;
+            label.innerHTML = ` ${linkTypeString}`;
+            label.style.fontSize = "12px";
+
+            const lineBreak = document.createElement("br");
+
+            form.appendChild(checkbox);
+            form.appendChild(label);
+            form.appendChild(lineBreak);
         }
     });
-    containerHTML += '<input type="checkbox" id="selectAllLinksCheckbox" onclick="toggleSelectAllLinks()"> Select All Links<br>';
-    containerHTML += '</form>';
-    console.log(containerHTML);
-    setContainerText("container", containerHTML);
+
+    const selectAllCheckbox = document.createElement("input");
+    selectAllCheckbox.type = "checkbox";
+    selectAllCheckbox.id = "selectAllLinksCheckbox";
+    selectAllCheckbox.onclick = toggleSelectAllLinks;
+
+    const selectAllLabel = document.createElement("label");
+    selectAllLabel.htmlFor = "selectAllLinksCheckbox";
+    selectAllLabel.innerHTML = " Select All Links";
+    selectAllLabel.style.fontSize = "12px";
+
+    const selectAllLineBreak = document.createElement("br");
+
+    form.appendChild(selectAllCheckbox);
+    form.appendChild(selectAllLabel);
+    form.appendChild(selectAllLineBreak);
+
+    linkContainer.innerHTML = ""; // Clear only the link part of the container
+    linkContainer.appendChild(form);
+
+    adjustHeight();
 }
 
-function convertLinksButton_onclick() {
+async function convertLinksButtonOnClick() {
+    setContainerText("statusContainer", 'Converting links...');
     const selectedLinks = getSelectedLinks();
-    console.log('Selected links:', selectedLinks);
     if (selectedLinks.length === 0) {
         setContainerText("container", 'No links selected for conversion.');
         return;
     }
+    console.log('Selected links:', JSON.stringify(selectedLinks));
 
-    selectedLinks.forEach(linkIndex => {
-        const link = availableLinks[linkIndex];
-        // alert("Selected link: " + JSON.stringify(link.linktype));
-        existingStartUri = link.art.uri;
-        existingTargetUri = link.targets[0].uri;
-        moduleUri = link.art.moduleUri;
-        componentUri = selArt_ref[0].componentUri;
-        format = selArt_ref[0].format;
-        linkType = link.linktype;
-        
-        getModuleBinding(moduleUri, existingStartUri, existingTargetUri).then(boundArtifactData => {
-            const baseStartUri = getBoundArtifactUri(existingStartUri, boundArtifactData);
+    let successfulConversions = 0;
 
-            const baseTargetUri = getBoundArtifactUri(existingTargetUri, boundArtifactData);
+    // Run link updates in sequence to avoid race conditions
+    for (const linkIndex of selectedLinks) {
+        const link = widgetHandler.availableLinks[linkIndex];
+        const { art: { uri: existingStartUri, moduleUri }, targets, linktype } = link;
 
-            const baseStartRef = new RM.ArtifactRef(baseStartUri,componentUri,null,format);
-            const baseTargetRef = new RM.ArtifactRef(baseTargetUri,componentUri,null,format);
-            
-            updateLinkContext(baseStartRef, linkType, baseTargetRef);
-        }).catch(error => {
-            console.error('Error fetching module binding for link target:', error);
-        });
-    });
-    setContainerText("container", `Converted ${selectedLinks.length} links.`);
+        const existingTargetUri = targets[0]?.uri;
+        const targetModuleUri = targets[0]?.moduleUri;
+        console.log('targetModuleURI:', targetModuleUri);
+        console.log('startModuleUri:', moduleUri);
+        console.log('existingStartUri:', existingStartUri);
+        console.log('existingTargetUri:', existingTargetUri);
+        const { componentUri, format } = widgetHandler.selArtRef[0]; // Assuming all selected artifacts are from the same Project
+
+        // Check if existingTargetUri is equal to existingStartUri
+        if (existingTargetUri === existingStartUri) {
+            console.error('Link target is same as source. Skipping link:', JSON.stringify(link));
+            continue;
+        }
+
+        if (!existingTargetUri) {
+            console.error('No target URI found for link:', JSON.stringify(link));
+            continue;
+        }
+
+        try {
+            const startBoundArtifactData = await getModuleBinding(moduleUri);
+            const baseStartUri = getBoundArtifactUri(existingStartUri, startBoundArtifactData);
+            const targetBoundArtifactData = await getModuleBinding(targetModuleUri);
+            const baseTargetUri = getBoundArtifactUri(existingTargetUri, targetBoundArtifactData);
+            const baseStartRef = new RM.ArtifactRef(baseStartUri, componentUri, null, format);
+            const baseTargetRef = new RM.ArtifactRef(baseTargetUri, componentUri, null, format);
+            await updateLinkContext(baseStartRef, linktype, baseTargetRef);
+        } catch (error) {
+            console.error('Error creating base links or fetching module binding for link target:', error);
+            continue;
+        }
+        successfulConversions++;
+    }
+
+    if (successfulConversions !== selectedLinks.length) {
+        setContainerText("statusContainer", `Converted ${successfulConversions} out of ${selectedLinks.length} links successfully. <br> Check if Base links already existed.`);
+    } else {
+        setContainerText("statusContainer", `Converted ${successfulConversions} out of ${selectedLinks.length} links successfully.`);
+    }
 }
 
 function getSelectedLinks() {
-    const form = document.getElementById('linkOptionsForm');
-    console.log(form);
-    const checkboxes = form.elements['link'];
-    const selectedLinks = [];
-
-    // Ensure checkboxes is always treated as an array
-    const checkboxesArray = checkboxes.length !== undefined ? checkboxes : [checkboxes];
-
-    // alert("Checkboxes: " + checkboxesArray.length);
-    for (let i = 0; i < checkboxesArray.length; i++) {
-        // alert("Checkbox: " + checkboxesArray[i]);
-        if (checkboxesArray[i].checked) {
-            selectedLinks.push(parseInt(checkboxesArray[i].value));
-        }
-    }
-    return selectedLinks;
+    const checkboxes = Array.from(document.querySelectorAll('#linkOptionsForm input[name="link"]:checked'));
+    return checkboxes.map(checkbox => parseInt(checkbox.value));
 }
 
 function setContainerText(containerId, string) {
-    document.getElementById(containerId).innerHTML = string;
+    const container = document.getElementById(containerId);
+    container.innerHTML = string;
     adjustHeight();
 }
 
-function getModuleBinding(moduleUri) {
-    return new Promise((resolve, reject) => {
-        fetch(`${moduleUri}/structure`, {
+async function getModuleBinding(moduleUri) {
+    try {
+        const response = await fetch(`${moduleUri}/structure`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'DoorsRP-Request-Type': 'public 2.0'
             },
             credentials: 'include'
-        }).then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch module binding. Response status: ' + response.status);
-            }
-            return response.json();
-        }).then(data => {
-            resolve(data);
-        }).catch(error => {
-            console.error('Error fetching module binding:', error);
-            reject('Error fetching module binding.');
         });
-    });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch module binding. Response status: ' + response.status);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 }
 
 function getBoundArtifactUri(artifactUri, moduleBindings) {
@@ -228,35 +218,40 @@ function getBoundArtifactUri(artifactUri, moduleBindings) {
     }
 }
 
-function getLinks(artifact, context) {
+function getLinks(artifact) {
     return new Promise((resolve, reject) => {
         RM.Data.getLinkedArtifacts(artifact, function(response) {
             if (response && response.code === RM.OperationResult.OPERATION_OK) {
                 resolve(response.data.artifactLinks);
             } else {
-                console.error('Error fetching links. Response:', response);
                 reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
             }
         });
     });
 }
 
-function updateLinkContext(start, linkType, target) {
-    // RM.Data.createLink(start, RM.Data.LinkTypes.LINK_TO, target, function(response) {
-    RM.Data.createLink(start, linkType, target, function(response) {
-        if (response.code !== RM.OperationResult.OPERATION_OK) {
-            console.error('Error creating link:', response);
-        } else {
-            console.log('Successfully created link between:', art1, 'and', target);
-        }
+async function updateLinkContext(start, linkType, target) {
+    return new Promise((resolve, reject) => {
+        RM.Data.createLink(start, linkType, target, function(response) {
+            if (response.code !== RM.OperationResult.OPERATION_OK) {
+                console.error('Error creating link:', response);
+                reject(response);
+            } else {
+                console.log('Successfully created link between:', start, 'and', target);
+                resolve();
+            }
+        });
     });
 }
 
 function toggleSelectAllLinks() {
-    selectAllLinks = !selectAllLinks;
-    const checkboxes = document.getElementsByName('link');
-    for (let i = 0; i < checkboxes.length; i++) {
-        checkboxes[i].checked = selectAllLinks;
-    }
+    const selectAll = document.getElementById("selectAllLinksCheckbox").checked;
+    document.querySelectorAll('input[name="link"]').forEach(checkbox => {
+        checkbox.checked = selectAll;
+    });
 }
 
+function updateSelectAllCheckboxState() {
+    const allChecked = Array.from(document.querySelectorAll('input[name="link"]')).every(checkbox => checkbox.checked);
+    document.getElementById("selectAllLinksCheckbox").checked = allChecked;
+}

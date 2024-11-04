@@ -87,23 +87,22 @@
 						<hr style='padding: 0 !important; margin: 0 !important;'/>
 
 					</div>
-				<!-- Main button to trigger the process -->
+				<div id="buttonContainer">
 				<button style="font-size:12px; id="readLinksButton" onclick="readLinksButton_onclick()">Read Links</button>
+				<button style="font-size:12px; id="readAllLinksButton" onclick="readAllLinksButtonOnClick()">Read all Links from Module</button>
+				<button style="font-size:12px; id="convertLinksButton" onclick="convertLinksButtonOnClick()">Convert Links to Base Links</button>
+				</div>
 
-				<!-- Main button to trigger the process -->
-				<button style="font-size:12px; id="convertLinksButton" onclick="convertLinksButton_onclick()">Convert Links to Base Links</button>
+				<div id="linkContainer">
+				<!-- This is where the form with links will be appended -->
+				</div>
 
-				<!-- Div for output messages -->
-				<div id="container" style="font-size:12px;></div>
 
-				<!-- Checkbox for selecting all links -->
-				<label>
-					<input type="checkbox" id="selectAllLinksCheckbox" onclick="toggleSelectAllLinks()">
-					Select All Links
-				</label> 
+				
+
 				
 				<!-- Div for additional messages or loading indicator -->
-				<div id="str010" style="font-size:12px; style="display: none;">Loading...</div>
+				<div id="statusContainer" style="font-size:12px;">Select Items to read links or Get links from Module</div>
 
 			</body>
 			</html>
