@@ -89,8 +89,8 @@
 					</div>
 				<div id="buttonContainer">
 				<button style="font-size:12px; id="readLinksButton" onclick="readLinksButton_onclick()">Read Links</button>
-				<button style="font-size:12px; id="readAllLinksButton" onclick="readAllLinksButtonOnClick()">Read all Links from Module</button>
-				<button style="font-size:12px; id="convertLinksButton" onclick="convertLinksButtonOnClick()">Convert Links to Base Links</button>
+				<button style="font-size:12px; id="readAllLinksButton" onclick="readAllLinksButtonOnClick()">Read whole Module</button>
+				<button style="font-size:12px; id="convertLinksButton" onclick="convertLinksButtonOnClick()">Convert to Base Links</button>
 				</div>
 
 				<div id="linkContainer">
@@ -104,6 +104,9 @@
 				<!-- Div for additional messages or loading indicator -->
 				<div id="statusContainer" style="font-size:12px;">Select Items to read links or Get links from Module</div>
 
+								<div id="ReloadContainer">
+				<button style="font-size:12px; display: none; id="ReloadButton" onclick="window.top.location.reload()">Reload Page</button>
+				</div>
 			</body>
 			</html>
 

@@ -36,8 +36,8 @@ function toggleVisibility(divId, buttonId, showText, hideText) {
 }
 
 function readLinksButton_onclick() {
-    // document.getElementById("str010").style.display = "block";
     setContainerText("statusContainer", 'Loading...');
+    widgetHandler.availableLinks = [];
     if (!widgetHandler.selArtRef || widgetHandler.selArtRef.length === 0) {
         setContainerText("statusContainer", 'No text artifact selected.');
         return;
@@ -47,7 +47,7 @@ function readLinksButton_onclick() {
 }
 
 async function readLinks(artifacts) {
-    widgetHandler.availableLinks = [];
+    // widgetHandler.availableLinks = [];
     for (const artifact of artifacts) {
         if (!artifact.moduleUri) {
             console.error('Module URI not found for artifact:', artifact);
@@ -71,9 +71,17 @@ function displayLinkOptions(links) {
     form.id = "linkOptionsForm";
 
     links.forEach((link, index) => {
-        const linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
+        let linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
+        // if link.linktype.direction exist
+        // console.log('Link direction:', link.linktype.direction);
+        if (link.linktype.direction) {
+            console.log('Link direction:', link.linktype.direction);
+        }
         const lastPart = link.art.uri.split('/').pop();
-        if (!lastPart.startsWith('TX')) {
+        const words = linkTypeString.split(' ');
+        console.log('words:', words.length, " ", linkTypeString);
+        // Skip TX links and _OBJ links and links with only one word in the last part of the Link type
+        if (!lastPart.startsWith('TX') && link.linktype.direction !== '_OBJ' && words.length === 1) {
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.id = `link_${index}`;
@@ -87,6 +95,7 @@ function displayLinkOptions(links) {
 
             const label = document.createElement("label");
             label.htmlFor = `link_${index}`;
+            if ( linkTypeString === 'Link' ) linkTypeString = 'Link To';
             label.innerHTML = ` ${linkTypeString}`;
             label.style.fontSize = "12px";
 
@@ -98,21 +107,24 @@ function displayLinkOptions(links) {
         }
     });
 
-    const selectAllCheckbox = document.createElement("input");
-    selectAllCheckbox.type = "checkbox";
-    selectAllCheckbox.id = "selectAllLinksCheckbox";
-    selectAllCheckbox.onclick = toggleSelectAllLinks;
-
-    const selectAllLabel = document.createElement("label");
-    selectAllLabel.htmlFor = "selectAllLinksCheckbox";
-    selectAllLabel.innerHTML = " Select All Links";
-    selectAllLabel.style.fontSize = "12px";
-
-    const selectAllLineBreak = document.createElement("br");
-
-    form.appendChild(selectAllCheckbox);
-    form.appendChild(selectAllLabel);
-    form.appendChild(selectAllLineBreak);
+    // Add select all checkbox if there are multiple links
+    if (form.length > 1) {
+        const selectAllCheckbox = document.createElement("input");
+        selectAllCheckbox.type = "checkbox";
+        selectAllCheckbox.id = "selectAllLinksCheckbox";
+        selectAllCheckbox.onclick = toggleSelectAllLinks;
+    
+        const selectAllLabel = document.createElement("label");
+        selectAllLabel.htmlFor = "selectAllLinksCheckbox";
+        selectAllLabel.innerHTML = " Select All Links";
+        selectAllLabel.style.fontSize = "12px";
+    
+        const selectAllLineBreak = document.createElement("br");
+    
+        form.appendChild(selectAllCheckbox);
+        form.appendChild(selectAllLabel);
+        form.appendChild(selectAllLineBreak);
+    }
 
     linkContainer.innerHTML = ""; // Clear only the link part of the container
     linkContainer.appendChild(form);
@@ -121,7 +133,6 @@ function displayLinkOptions(links) {
 }
 
 async function convertLinksButtonOnClick() {
-    setContainerText("statusContainer", 'Converting links...');
     const selectedLinks = getSelectedLinks();
     if (selectedLinks.length === 0) {
         setContainerText("container", 'No links selected for conversion.');
@@ -254,4 +265,59 @@ function toggleSelectAllLinks() {
 function updateSelectAllCheckboxState() {
     const allChecked = Array.from(document.querySelectorAll('input[name="link"]')).every(checkbox => checkbox.checked);
     document.getElementById("selectAllLinksCheckbox").checked = allChecked;
+}
+
+async function readAllLinksButtonOnClick() {
+    setContainerText("statusContainer", 'Loading...');
+    widgetHandler.availableLinks = [];
+    try {
+        const response = await new Promise((resolve, reject) => {
+            RM.Client.getCurrentArtifact(function(response) {
+                if (response.code === RM.OperationResult.OPERATION_OK) {
+                    resolve(response);
+                } else {
+                    reject('Error retrieving current artifact.');
+                }
+            });
+        });
+
+        if (response.data.values[RM.Data.Attributes.FORMAT] === "Module") {
+            const res = await new Promise((resolve, reject) => {
+                
+                RM.Data.getContentsAttributes(response.data.ref, [RM.Data.Attributes.PRIMARY_TEXT, 'http://purl.org/dc/terms/identifier'], function(res) {
+                    if (res.code === RM.OperationResult.OPERATION_OK) {
+                        resolve(res);
+                    } else {
+                        reject('Error reading module contents.');
+                    }
+                });
+            });
+            // console.log('Module contents:', JSON.stringify(res.data));
+       
+            widgetHandler.selArtRef = [res.data[0]];
+            for (const artifact of res.data) {
+               
+                try {
+                    const links = await getLinks(artifact.ref);
+                    widgetHandler.availableLinks.push(...links);
+                    // if links != 0 Display links in console
+                    // if (links.length !== 0) {
+                    //     console.log('Links for artifact:', artifact.values['http://purl.org/dc/terms/identifier'] );
+                    //         // , ' ', artifact.values[RM.Data.Attributes.PRIMARY_TEXT]);
+                    //     // console.log(JSON.stringify(links));
+                    // }
+                    // console.log('Links for artifact:', artifact.values[RM.Data.Attributes.PRIMARY_TEXT]);
+                    // console.log(JSON.stringify(links));
+                } catch (error) {
+                    console.error('Error fetching links:', error);
+                }
+            }
+            displayLinkOptions(widgetHandler.availableLinks);
+            setContainerText("statusContainer", 'Select Link types to convert.');
+        } else {
+            alert('You are not in a Module.');
+        }
+    } catch (error) {
+        alert(error);
+    }
 }
