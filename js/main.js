@@ -35,15 +35,31 @@ function toggleVisibility(divId, buttonId, showText, hideText) {
     adjustHeight();
 }
 
-function readLinksButton_onclick() {
+async function readLinksButton_onclick() {
     setContainerText("statusContainer", 'Loading...');
     widgetHandler.availableLinks = [];
     if (!widgetHandler.selArtRef || widgetHandler.selArtRef.length === 0) {
         setContainerText("statusContainer", 'No text artifact selected.');
         return;
     }
-    readLinks(widgetHandler.selArtRef);
+    await readLinks(widgetHandler.selArtRef);
     setContainerText("statusContainer", 'Select Link types to convert.');
+    // If there is links to display
+    // alert(widgetHandler.availableLinks.length);
+    if (widgetHandler.availableLinks.length !== 0) {
+        displayLinkOptions(widgetHandler.availableLinks);
+        setContainerText("statusContainer", 'Select Link types to convert.');
+        // Show the convert button div
+        const convertButtonDiv = document.getElementById('convertButtonContainer');
+        if (convertButtonDiv) {
+            convertButtonDiv.style.display = 'block';
+            adjustHeight();
+        } else {
+            console.error('convertButtonContainer not found');
+        }
+    } else {
+        setContainerText("statusContainer", 'No outgoing links found in selected items.');
+    }
 }
 
 async function readLinks(artifacts) {
@@ -125,6 +141,10 @@ function displayLinkOptions(links) {
         form.appendChild(selectAllLabel);
         form.appendChild(selectAllLineBreak);
     }
+    // If form length is 0, set available links to 0
+    if (form.length === 0) {
+        widgetHandler.availableLinks = [];
+    }
 
     linkContainer.innerHTML = ""; // Clear only the link part of the container
     linkContainer.appendChild(form);
@@ -132,7 +152,8 @@ function displayLinkOptions(links) {
     adjustHeight();
 }
 
-async function convertLinksButtonOnClick() {
+async function convertLinksButtonOnClick(convert) {
+    console.log('Convert button clicked:', convert);
     const selectedLinks = getSelectedLinks();
     if (selectedLinks.length === 0) {
         setContainerText("container", 'No links selected for conversion.');
@@ -186,6 +207,24 @@ async function convertLinksButtonOnClick() {
     } else {
         setContainerText("statusContainer", `Converted ${successfulConversions} out of ${selectedLinks.length} links successfully.`);
     }
+    
+    // Show the reload button
+    const reloadButton = document.getElementById('reloadButton');
+    if (reloadButton) {
+        reloadButton.style.display = 'block';
+        adjustHeight();
+    } else {
+        console.error('ReloadButton not found');
+    }
+    // Hide the convert button div
+    const convertButtonDiv = document.getElementById('convertButtonContainer');
+    if (convertButtonDiv) {
+        convertButtonDiv.style.display = 'none';
+        adjustHeight();
+    } else {
+        console.error('convertButtonContainer not found');
+    }
+
 }
 
 function getSelectedLinks() {
@@ -312,8 +351,23 @@ async function readAllLinksButtonOnClick() {
                     console.error('Error fetching links:', error);
                 }
             }
-            displayLinkOptions(widgetHandler.availableLinks);
-            setContainerText("statusContainer", 'Select Link types to convert.');
+            // If there is links to display
+            // alert(widgetHandler.availableLinks.length);
+            if (widgetHandler.availableLinks.length !== 0) {
+                displayLinkOptions(widgetHandler.availableLinks);
+                setContainerText("statusContainer", 'Select Link types to convert.');
+                // Show the convert button div
+                const convertButtonDiv = document.getElementById('convertButtonContainer');
+                if (convertButtonDiv) {
+                    convertButtonDiv.style.display = 'block';
+                    adjustHeight();
+                } else {
+                    console.error('convertButtonContainer not found');
+                }
+            } else {
+                setContainerText("statusContainer", 'No links found in the module.');
+            }
+
         } else {
             alert('You are not in a Module.');
         }
