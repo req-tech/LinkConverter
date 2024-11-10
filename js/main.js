@@ -9,19 +9,34 @@ const widgetHandler = {
 // Subscribe to artifact selection event
 RM.Event.subscribe(RM.Event.ARTIFACT_SELECTED, onSelection);
 
+// Function to handle artifact selection event
 function onSelection(artifacts) {
     widgetHandler.selArtRef = artifacts || [];
 }
 
+// Function to adjust the window height
 function adjustHeight() {
     gadgets.window.adjustHeight();
 }
 
+// Function to execute when body loads
 function onBodyLoad() {
     loadLanguage(); // Load the text according to the language file set in main.xml
     adjustHeight();
 }
 
+// Function to show or hide HTML elements
+function toggleElementVisibility(elementId, displayStyle) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.style.display = displayStyle;
+        adjustHeight();
+    } else {
+        console.error(`${elementId} not found`);
+    }
+}
+
+// Function to toggle the visibility of a div and update button text
 function toggleVisibility(divId, buttonId, showText, hideText) {
     const div = document.getElementById(divId);
     const button = document.getElementById(buttonId);
@@ -35,6 +50,7 @@ function toggleVisibility(divId, buttonId, showText, hideText) {
     adjustHeight();
 }
 
+// Function to handle the Read Links button click
 async function readLinksButton_onclick() {
     setContainerText("statusContainer", 'Loading...');
     widgetHandler.availableLinks = [];
@@ -44,26 +60,18 @@ async function readLinksButton_onclick() {
     }
     await readLinks(widgetHandler.selArtRef);
     setContainerText("statusContainer", 'Select Link types to convert.');
-    // If there is links to display
-    // alert(widgetHandler.availableLinks.length);
+    
     if (widgetHandler.availableLinks.length !== 0) {
-        displayLinkOptions(widgetHandler.availableLinks);
+        const formLength = displayLinkOptions(widgetHandler.availableLinks);
         setContainerText("statusContainer", 'Select Link types to convert.');
-        // Show the convert button div
-        const convertButtonDiv = document.getElementById('convertButtonContainer');
-        if (convertButtonDiv) {
-            convertButtonDiv.style.display = 'block';
-            adjustHeight();
-        } else {
-            console.error('convertButtonContainer not found');
-        }
+        toggleElementVisibility('convertButtonContainer', 'block');
     } else {
         setContainerText("statusContainer", 'No outgoing links found in selected items.');
     }
 }
 
+// Function to read links of selected artifacts
 async function readLinks(artifacts) {
-    // widgetHandler.availableLinks = [];
     for (const artifact of artifacts) {
         if (!artifact.moduleUri) {
             console.error('Module URI not found for artifact:', artifact);
@@ -78,53 +86,56 @@ async function readLinks(artifacts) {
             setContainerText("container", 'Error fetching links. Please check the artifact URI or permissions.');
         }
     }
-    displayLinkOptions(widgetHandler.availableLinks);
+    displayLinkOptions(widgetHandler.availableLinks);  
 }
 
+// Function to display link options as checkboxes
 function displayLinkOptions(links) {
-    const linkContainer = document.getElementById("linkContainer"); // Changed to update only the link part of the container
+    const linkContainer = document.getElementById("linkContainer");
     const form = document.createElement("form");
     form.id = "linkOptionsForm";
 
-    links.forEach((link, index) => {
-        let linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
-        // if link.linktype.direction exist
-        // console.log('Link direction:', link.linktype.direction);
-        if (link.linktype.direction) {
-            console.log('Link direction:', link.linktype.direction);
-        }
-        const lastPart = link.art.uri.split('/').pop();
-        const words = linkTypeString.split(' ');
-        console.log('words:', words.length, " ", linkTypeString);
-        // Skip TX links and _OBJ links and links with only one word in the last part of the Link type
-        if (!lastPart.startsWith('TX') && link.linktype.direction !== '_OBJ' && words.length === 1) {
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.id = `link_${index}`;
-            checkbox.name = "link";
-            checkbox.value = index;
-            checkbox.classList.add("link-checkbox");
-            checkbox.addEventListener("click", (e) => {
-                e.stopPropagation();
-                updateSelectAllCheckboxState();
-            });
+    const linkTypeCount = {};
+    links.forEach((link) => {
+        if (link.art.moduleUri != null && link.linktype.direction !== '_OBJ') {
+            // console.log('Link in displayLinkOptions:', JSON.stringify(link));
+            let linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
+            linkTypeString = linkTypeString === 'Link' ? 'Link To' : linkTypeString;
 
-            const label = document.createElement("label");
-            label.htmlFor = `link_${index}`;
-            if ( linkTypeString === 'Link' ) linkTypeString = 'Link To';
-            label.innerHTML = ` ${linkTypeString}`;
-            label.style.fontSize = "12px";
-
-            const lineBreak = document.createElement("br");
-
-            form.appendChild(checkbox);
-            form.appendChild(label);
-            form.appendChild(lineBreak);
+            if (!linkTypeCount[linkTypeString]) {
+                linkTypeCount[linkTypeString] = [];
+            }
+            linkTypeCount[linkTypeString].push(link);
         }
     });
 
-    // Add select all checkbox if there are multiple links
-    if (form.length > 1) {
+    console.log('Link type count:', JSON.stringify(linkTypeCount));
+
+    Object.entries(linkTypeCount).forEach(([linkType, linkGroup], index) => {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = `link_${index}`;
+        checkbox.name = "link";
+        checkbox.value = linkGroup.map((_, i) => i).join(","); // Store all indices of the links of the same type
+        checkbox.classList.add("link-checkbox");
+        checkbox.addEventListener("click", (e) => {
+            e.stopPropagation();
+            updateSelectAllCheckboxState();
+        });
+
+        const label = document.createElement("label");
+        label.htmlFor = `link_${index}`;
+        label.innerHTML = ` ${linkType} (${linkGroup.length})`;
+        label.style.fontSize = "12px";
+
+        const lineBreak = document.createElement("br");
+
+        form.appendChild(checkbox);
+        form.appendChild(label);
+        form.appendChild(lineBreak);
+    });
+
+    if (Object.keys(linkTypeCount).length > 1) {
         const selectAllCheckbox = document.createElement("input");
         selectAllCheckbox.type = "checkbox";
         selectAllCheckbox.id = "selectAllLinksCheckbox";
@@ -141,19 +152,21 @@ function displayLinkOptions(links) {
         form.appendChild(selectAllLabel);
         form.appendChild(selectAllLineBreak);
     }
-    // If form length is 0, set available links to 0
-    if (form.length === 0) {
+
+    if (form.children.length === 0) {
         widgetHandler.availableLinks = [];
     }
 
-    linkContainer.innerHTML = ""; // Clear only the link part of the container
+    linkContainer.innerHTML = "";
     linkContainer.appendChild(form);
 
     adjustHeight();
+    return form.length; 
 }
 
-async function convertLinksButtonOnClick(convert) {
-    console.log('Convert button clicked:', convert);
+// Function to handle the Convert Links button click
+async function convertLinksButtonOnClick(removeModuleLinks) {
+    console.log('Convert button clicked:', removeModuleLinks);
     const selectedLinks = getSelectedLinks();
     if (selectedLinks.length === 0) {
         setContainerText("container", 'No links selected for conversion.');
@@ -163,81 +176,113 @@ async function convertLinksButtonOnClick(convert) {
 
     let successfulConversions = 0;
 
-    // Run link updates in sequence to avoid race conditions
-    for (const linkIndex of selectedLinks) {
-        const link = widgetHandler.availableLinks[linkIndex];
-        const { art: { uri: existingStartUri, moduleUri }, targets, linktype } = link;
+    for (const selectedGroup of selectedLinks) {
+        const linkIndices = selectedGroup.split(",").map(Number);
+        for (const linkIndex of linkIndices) {
+            const link = widgetHandler.availableLinks[linkIndex];
+            const { art: { uri: existingStartUri, moduleUri }, targets, linktype } = link;
+            console.log('Converting link:', JSON.stringify(link));
 
-        const existingTargetUri = targets[0]?.uri;
-        const targetModuleUri = targets[0]?.moduleUri;
-        console.log('targetModuleURI:', targetModuleUri);
-        console.log('startModuleUri:', moduleUri);
-        console.log('existingStartUri:', existingStartUri);
-        console.log('existingTargetUri:', existingTargetUri);
-        const { componentUri, format } = widgetHandler.selArtRef[0]; // Assuming all selected artifacts are from the same Project
+            const existingTargetUri = targets[0]?.uri;
+            const targetModuleUri = targets[0]?.moduleUri;
+            const { componentUri, format } = widgetHandler.selArtRef[0];
 
-        // Check if existingTargetUri is equal to existingStartUri
-        if (existingTargetUri === existingStartUri) {
-            console.error('Link target is same as source. Skipping link:', JSON.stringify(link));
-            continue;
+            if (existingTargetUri === existingStartUri) {
+                console.error('Link target is same as source. Skipping link:', JSON.stringify(link));
+                continue;
+            }
+
+            if (!existingTargetUri) {
+                console.error('No target URI found for link:', JSON.stringify(link));
+                continue;
+            }
+
+            try {
+                const startBoundArtifactData = await getModuleBinding(moduleUri);
+                const baseStartUri = getBoundArtifactUri(existingStartUri, startBoundArtifactData);
+                // if targetModuleUri is null we handle Twisted Link case Link starts from Module but links to base artifact
+                let baseTargetUri;
+                if (targetModuleUri !== null) {
+                    const targetBoundArtifactData = await getModuleBinding(targetModuleUri);
+                    baseTargetUri = getBoundArtifactUri(existingTargetUri, targetBoundArtifactData);
+                } else {
+                    baseTargetUri = existingTargetUri;
+                }
+                const baseStartRef = new RM.ArtifactRef(baseStartUri, componentUri, null, format);
+                const baseTargetRef = new RM.ArtifactRef(baseTargetUri, componentUri, null, format);
+                await updateLinkContext(baseStartRef, linktype, baseTargetRef);
+            } catch (error) {
+                console.error('Error creating base links or fetching module binding for link target:', error);
+                continue;
+            }
+            
+            if (removeModuleLinks) {
+                try {
+                    const startRef = new RM.ArtifactRef(existingStartUri, componentUri, moduleUri, format);
+                    const targetRef = new RM.ArtifactRef(existingTargetUri, componentUri, targetModuleUri, format);
+                    await deleteModuleLinks(startRef, linktype, targetRef);
+                } catch (error) {
+                    console.error('Error deleting module links:', error);
+                }
+            }
+
+            successfulConversions++;
         }
-
-        if (!existingTargetUri) {
-            console.error('No target URI found for link:', JSON.stringify(link));
-            continue;
-        }
-
-        try {
-            const startBoundArtifactData = await getModuleBinding(moduleUri);
-            const baseStartUri = getBoundArtifactUri(existingStartUri, startBoundArtifactData);
-            const targetBoundArtifactData = await getModuleBinding(targetModuleUri);
-            const baseTargetUri = getBoundArtifactUri(existingTargetUri, targetBoundArtifactData);
-            const baseStartRef = new RM.ArtifactRef(baseStartUri, componentUri, null, format);
-            const baseTargetRef = new RM.ArtifactRef(baseTargetUri, componentUri, null, format);
-            await updateLinkContext(baseStartRef, linktype, baseTargetRef);
-        } catch (error) {
-            console.error('Error creating base links or fetching module binding for link target:', error);
-            continue;
-        }
-        successfulConversions++;
     }
 
-    if (successfulConversions !== selectedLinks.length) {
-        setContainerText("statusContainer", `Converted ${successfulConversions} out of ${selectedLinks.length} links successfully. <br> Check if Base links already existed.`);
-    } else {
-        setContainerText("statusContainer", `Converted ${successfulConversions} out of ${selectedLinks.length} links successfully.`);
-    }
+    const statusMessage = `Converted ${successfulConversions} links out of ${selectedLinks.length} link types successfully.`;
+    setContainerText("statusContainer", statusMessage);
+    // Todo: Add a message to check if base links already existed
+    // setContainerText("statusContainer", successfulConversions !== selectedLinks.length ? `${statusMessage} <br> Check if Base links already existed.` : statusMessage);
     
-    // Show the reload button
-    const reloadButton = document.getElementById('reloadButton');
-    if (reloadButton) {
-        reloadButton.style.display = 'block';
-        adjustHeight();
-    } else {
-        console.error('ReloadButton not found');
-    }
-    // Hide the convert button div
-    const convertButtonDiv = document.getElementById('convertButtonContainer');
-    if (convertButtonDiv) {
-        convertButtonDiv.style.display = 'none';
-        adjustHeight();
-    } else {
-        console.error('convertButtonContainer not found');
-    }
-
+    toggleElementVisibility('reloadButton', 'block');
+    toggleElementVisibility('convertButtonContainer', 'none');
 }
 
+// Function to update link context
+async function updateLinkContext(start, linkType, target) {
+    return new Promise((resolve, reject) => {
+        RM.Data.createLink(start, linkType, target, function(response) {
+            if (response.code !== RM.OperationResult.OPERATION_OK) {
+                console.error('Error creating link:', response);
+                reject(response);
+            } else {
+                console.log('Successfully created link between:', start, 'and', target);
+                resolve();
+            }
+        });
+    });
+}
+
+// Function to delete module links
+async function deleteModuleLinks(start, linkType, target) {
+    return new Promise((resolve, reject) => {
+        RM.Data.deleteLink(start, linkType, target, function(response) {
+            if (response.code !== RM.OperationResult.OPERATION_OK) {
+                console.error('Error deleting link:', response);
+                reject(response);
+            } else {
+                console.log('Successfully deleted link between:', start, 'and', target);
+                resolve();
+            }
+        });
+    });
+}
+
+// Function to get selected links
 function getSelectedLinks() {
     const checkboxes = Array.from(document.querySelectorAll('#linkOptionsForm input[name="link"]:checked'));
-    return checkboxes.map(checkbox => parseInt(checkbox.value));
+    return checkboxes.map(checkbox => checkbox.value);
 }
 
+// Function to set container text
 function setContainerText(containerId, string) {
     const container = document.getElementById(containerId);
     container.innerHTML = string;
     adjustHeight();
 }
 
+// Function to get module binding
 async function getModuleBinding(moduleUri) {
     try {
         const response = await fetch(`${moduleUri}/structure`, {
@@ -259,6 +304,7 @@ async function getModuleBinding(moduleUri) {
     }
 }
 
+// Function to get bound artifact URI
 function getBoundArtifactUri(artifactUri, moduleBindings) {
     const binding = moduleBindings.find(item => item.uri === artifactUri);
     if (binding && binding.boundArtifact) {
@@ -268,11 +314,34 @@ function getBoundArtifactUri(artifactUri, moduleBindings) {
     }
 }
 
+// Function to get links of an artifact
 function getLinks(artifact) {
     return new Promise((resolve, reject) => {
         RM.Data.getLinkedArtifacts(artifact, function(response) {
             if (response && response.code === RM.OperationResult.OPERATION_OK) {
-                resolve(response.data.artifactLinks);
+                const links = response.data.artifactLinks;
+
+                if (!links || links.length === 0) {
+                    resolve([]); // No links found
+                } else {
+                    const filteredLinks = links.filter(link => {
+                        const isModuleLink = link.art.moduleUri != null;
+                        let isOutlink = false;
+                        let isNotBacklink = false;
+
+                        if (typeof link.linktype === 'object' && link.linktype.uri) {
+                            isOutlink = link.linktype.direction === '_SUB';
+                            isNotBacklink = link.linktype.direction !== '_OBJ';
+                        } else if (typeof link.linktype === 'string') {
+                            isOutlink = !link.linktype.includes(' ');
+                            isNotBacklink = true; // Assume non-backlink if linktype is a string without direction
+                        }
+
+                        return isModuleLink && isOutlink && isNotBacklink;
+                    });
+                    
+                    resolve(filteredLinks);
+                }
             } else {
                 reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
             }
@@ -280,20 +349,7 @@ function getLinks(artifact) {
     });
 }
 
-async function updateLinkContext(start, linkType, target) {
-    return new Promise((resolve, reject) => {
-        RM.Data.createLink(start, linkType, target, function(response) {
-            if (response.code !== RM.OperationResult.OPERATION_OK) {
-                console.error('Error creating link:', response);
-                reject(response);
-            } else {
-                console.log('Successfully created link between:', start, 'and', target);
-                resolve();
-            }
-        });
-    });
-}
-
+// Function to toggle the Select All Links checkbox
 function toggleSelectAllLinks() {
     const selectAll = document.getElementById("selectAllLinksCheckbox").checked;
     document.querySelectorAll('input[name="link"]').forEach(checkbox => {
@@ -301,11 +357,13 @@ function toggleSelectAllLinks() {
     });
 }
 
+// Function to update the Select All checkbox state
 function updateSelectAllCheckboxState() {
     const allChecked = Array.from(document.querySelectorAll('input[name="link"]')).every(checkbox => checkbox.checked);
     document.getElementById("selectAllLinksCheckbox").checked = allChecked;
 }
 
+// Function to handle Read All Links button click
 async function readAllLinksButtonOnClick() {
     setContainerText("statusContainer", 'Loading...');
     widgetHandler.availableLinks = [];
@@ -322,7 +380,6 @@ async function readAllLinksButtonOnClick() {
 
         if (response.data.values[RM.Data.Attributes.FORMAT] === "Module") {
             const res = await new Promise((resolve, reject) => {
-                
                 RM.Data.getContentsAttributes(response.data.ref, [RM.Data.Attributes.PRIMARY_TEXT, 'http://purl.org/dc/terms/identifier'], function(res) {
                     if (res.code === RM.OperationResult.OPERATION_OK) {
                         resolve(res);
@@ -331,41 +388,26 @@ async function readAllLinksButtonOnClick() {
                     }
                 });
             });
-            // console.log('Module contents:', JSON.stringify(res.data));
        
             widgetHandler.selArtRef = [res.data[0]];
             for (const artifact of res.data) {
-               
+                // console.log('Artifact:', JSON.stringify(artifact));
                 try {
                     const links = await getLinks(artifact.ref);
                     widgetHandler.availableLinks.push(...links);
-                    // if links != 0 Display links in console
-                    // if (links.length !== 0) {
-                    //     console.log('Links for artifact:', artifact.values['http://purl.org/dc/terms/identifier'] );
-                    //         // , ' ', artifact.values[RM.Data.Attributes.PRIMARY_TEXT]);
-                    //     // console.log(JSON.stringify(links));
-                    // }
-                    // console.log('Links for artifact:', artifact.values[RM.Data.Attributes.PRIMARY_TEXT]);
-                    // console.log(JSON.stringify(links));
                 } catch (error) {
                     console.error('Error fetching links:', error);
                 }
             }
-            // If there is links to display
-            // alert(widgetHandler.availableLinks.length);
-            if (widgetHandler.availableLinks.length !== 0) {
-                displayLinkOptions(widgetHandler.availableLinks);
+            
+            // if (widgetHandler.availableLinks.length !== 0) {
+                const formLength = displayLinkOptions(widgetHandler.availableLinks);
+            if (formLength !== 0) {
                 setContainerText("statusContainer", 'Select Link types to convert.');
-                // Show the convert button div
-                const convertButtonDiv = document.getElementById('convertButtonContainer');
-                if (convertButtonDiv) {
-                    convertButtonDiv.style.display = 'block';
-                    adjustHeight();
-                } else {
-                    console.error('convertButtonContainer not found');
-                }
+                toggleElementVisibility('convertButtonContainer', 'block');
             } else {
-                setContainerText("statusContainer", 'No links found in the module.');
+                setContainerText("statusContainer", 'No outgoing Module links found in the module.');
+                toggleElementVisibility('convertButtonContainer', 'none');
             }
 
         } else {

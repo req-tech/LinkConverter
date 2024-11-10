@@ -24,10 +24,6 @@
                 <!-- Custom JS-code -->
 				<script type="text/javascript" src="./js/main.js" charset="utf-8"></script> 
 
-
-
-
-
                 <style>
                     #container::-webkit-scrollbar {
                         -webkit-appearance: none;
@@ -79,29 +75,26 @@
 					</div>
 					
 					<div style="font-size:12px; display: none;" id='settings_div'>
-						<b><span id='str008'>  </span> </b><br/>
-                        <label for="apiKeyInput" style="font-size:12px;">OpenAI API key</label>
-                        <input type="password" id="apiKeyInput" style="width: 100%;" placeholder="API Key"/>
-                        <button type="button" style="font-size:12px;" onclick="saveApiKeyAsCookie();">Save Key on this computer as Cookie</button>
-                        <button type="button" style="font-size:12px;" onclick="removeApiKeyCookie();">Remove Cookie</button>
-						<hr style='padding: 0 !important; margin: 0 !important;'/>
 
 					</div>
-				<div id="buttonContainer">
-				<button style="font-size:12px; id="readLinksButton" onclick="readLinksButton_onclick()">Read Links</button>
-				<button style="font-size:12px; id="readAllLinksButton" onclick="readAllLinksButtonOnClick()">Read whole Module</button>
+				<div style="font-size:12px; id="buttonContainer">
+				Read links from: <br>
+				<button style="font-size:12px; background-color:0d63fd;  border: 0d63fd; color:white;" id="readAllLinksButton" onclick="readAllLinksButtonOnClick()">Whole Module</button>
+				<button style="font-size:12px;" id="readLinksButton" onclick="readLinksButton_onclick()">Selected Items only</button>
+				<br>
 				</div>
+	
+				<!-- Div for additional messages or loading indicator -->
+				<div id="statusContainer" style="font-size:12px;"> </div>
 
 				<div id="linkContainer">
 				<!-- This is where the form with links will be appended -->
 				</div>
-	
-				<!-- Div for additional messages or loading indicator -->
-				<div id="statusContainer" style="font-size:12px;">Select Items to read links or Get links from Module</div>
 
+				<!-- Div for Link conversion buttons - Function values is whether to delete Module Links -->
 				<div style="display: none;" id="convertButtonContainer">
-				<button style="font-size:12px; id="convertLinksButton" onclick="convertLinksButtonOnClick('convert')">Convert to Base Links</button>
-				<button style="font-size:12px; id="createBaseLinksButton" onclick="convertLinksButtonOnClick('create')">Create Base Links</button>
+				<button style="font-size:12px; background-color:0d63fd;  border: 0d63fd; color:white;" id="convertLinksButton" onclick="convertLinksButtonOnClick(true)">Convert to Base Links</button>
+				<button style="font-size:12px;" id="createBaseLinksButton" onclick="convertLinksButtonOnClick(false)">Add Base Links</button>
 				</div>
 
 				<div id="reloadContainer">
