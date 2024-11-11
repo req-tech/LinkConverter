@@ -96,9 +96,11 @@ function displayLinkOptions(links) {
     form.id = "linkOptionsForm";
 
     const linkTypeCount = {};
-    links.forEach((link) => {
+    links.forEach((link, index) => {
         if (link.art.moduleUri != null && link.linktype.direction !== '_OBJ') {
-            // console.log('Link in displayLinkOptions:', JSON.stringify(link));
+            // Add the original index to the link object
+            link.originalIndex = index;
+
             let linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
             linkTypeString = linkTypeString === 'Link' ? 'Link To' : linkTypeString;
 
@@ -109,14 +111,14 @@ function displayLinkOptions(links) {
         }
     });
 
-    console.log('Link type count:', JSON.stringify(linkTypeCount));
-
+    // Indexing over all artifacts 
     Object.entries(linkTypeCount).forEach(([linkType, linkGroup], index) => {
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.id = `link_${index}`;
         checkbox.name = "link";
-        checkbox.value = linkGroup.map((_, i) => i).join(","); // Store all indices of the links of the same type
+        // Store all original indices of the links of the same type
+        checkbox.value = linkGroup.map(link => link.originalIndex).join(",");
         checkbox.classList.add("link-checkbox");
         checkbox.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -167,21 +169,35 @@ function displayLinkOptions(links) {
 // Function to handle the Convert Links button click
 async function convertLinksButtonOnClick(removeModuleLinks) {
     console.log('Convert button clicked:', removeModuleLinks);
-    const selectedLinks = getSelectedLinks();
+   
+    // Get selected links
+    const nodeList = document.querySelectorAll('#linkOptionsForm input[name="link"]');
+    const checkboxes = [];
+    
+    for (let i = 0; i < nodeList.length; i++) {
+        if (nodeList[i].checked) {
+            checkboxes.push(nodeList[i]);
+        }
+    }
+    
+    // Now checkboxes array contains all the checked checkboxes
+    const selectedLinks = checkboxes.map(checkbox => checkbox.value);
+    // getSelectedLinks();
+    // return 
     if (selectedLinks.length === 0) {
         setContainerText("container", 'No links selected for conversion.');
         return;
     }
-    console.log('Selected links:', JSON.stringify(selectedLinks));
 
     let successfulConversions = 0;
 
     for (const selectedGroup of selectedLinks) {
         const linkIndices = selectedGroup.split(",").map(Number);
+        
         for (const linkIndex of linkIndices) {
             const link = widgetHandler.availableLinks[linkIndex];
             const { art: { uri: existingStartUri, moduleUri }, targets, linktype } = link;
-            console.log('Converting link:', JSON.stringify(link));
+            // console.log('Converting link:', JSON.stringify(link));
 
             const existingTargetUri = targets[0]?.uri;
             const targetModuleUri = targets[0]?.moduleUri;
@@ -210,6 +226,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                 }
                 const baseStartRef = new RM.ArtifactRef(baseStartUri, componentUri, null, format);
                 const baseTargetRef = new RM.ArtifactRef(baseTargetUri, componentUri, null, format);
+                console.log('Base start ref:', baseStartUri, 'Target ref:', baseTargetUri);
                 await updateLinkContext(baseStartRef, linktype, baseTargetRef);
             } catch (error) {
                 console.error('Error creating base links or fetching module binding for link target:', error);
@@ -232,9 +249,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
 
     const statusMessage = `Converted ${successfulConversions} links out of ${selectedLinks.length} link types successfully.`;
     setContainerText("statusContainer", statusMessage);
-    // Todo: Add a message to check if base links already existed
-    // setContainerText("statusContainer", successfulConversions !== selectedLinks.length ? `${statusMessage} <br> Check if Base links already existed.` : statusMessage);
-    
+     
     toggleElementVisibility('reloadButton', 'block');
     toggleElementVisibility('convertButtonContainer', 'none');
 }
@@ -391,7 +406,7 @@ async function readAllLinksButtonOnClick() {
        
             widgetHandler.selArtRef = [res.data[0]];
             for (const artifact of res.data) {
-                // console.log('Artifact:', JSON.stringify(artifact));
+                
                 try {
                     const links = await getLinks(artifact.ref);
                     widgetHandler.availableLinks.push(...links);

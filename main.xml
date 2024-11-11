@@ -83,13 +83,15 @@
 				<button style="font-size:12px;" id="readLinksButton" onclick="readLinksButton_onclick()">Selected Items only</button>
 				<br>
 				</div>
-	
-				<!-- Div for additional messages or loading indicator -->
-				<div id="statusContainer" style="font-size:12px;"> </div>
 
 				<div id="linkContainer">
 				<!-- This is where the form with links will be appended -->
 				</div>
+	
+				<!-- Div for additional messages or loading indicator -->
+				<div id="statusContainer" style="font-size:12px;"> </div>
+
+
 
 				<!-- Div for Link conversion buttons - Function values is whether to delete Module Links -->
 				<div style="display: none;" id="convertButtonContainer">
