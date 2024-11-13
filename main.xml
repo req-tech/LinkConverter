@@ -64,18 +64,21 @@
 					<hr style='padding: 0 !important; margin: 0 !important;'/>
 
 					<div style="font-size:12px; display: none;" id='instructions_div'>
-						<b><span id='str003'></span> </b> <span id='str004'></span> <br/>
+						<b><span id='str003'> </span> </b> <span id='str004a'>This widget allows you to read and convert links from selected artifacts or an entire module.
+						 To begin, click the:</span> <br/>
 						<ol>
-							<li> <span id='str005'></span> </li>
-							<li> <span id='str006'></span> </li>
-							<li> <span id='str007'></span></li>
+							<li> <span id='str005a'>Open module. This widget works only in the Module View.</span> </li>	
+							<li> <span id='str005b'>"Read All Links" button to load links from the entire module</span> </li>
+							<li> <span id='str005c'>"Read Links" button to load links from the selected items.</span> </li>
+							<li> <span id='str005d'>Once the links are loaded, select the link types you wish to convert by checking the corresponding checkboxes</span></li>
+							<li> <span id='str005e'>Finally, click the "Convert Links" button to initiate the conversion process</span></li>
 						</ol>
 
 						<hr style='padding: 0 !important; margin: 0 !important;'/>
 					</div>
 					
 					<div style="font-size:12px; display: none;" id='settings_div'>
-
+						This Widget has no settings.
 					</div>
 				<div style="font-size:12px; id="buttonContainer">
 				Read links from: <br>

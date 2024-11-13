@@ -13,21 +13,30 @@ lang_json = `{
       "text": "How to use this widget?"
     },
     {
-      "id": "str004",
-      "text": "This widget is designed to be a template for new Celeris widgets. It contains most of the basic code you might need to develop a widget. Follow the instructions below to use this widget with ease and confidence."
+      "id": "str004a",
+      "text": "This widget allows you to read and convert links from selected artifacts or an entire module. To begin, click the:"
     },
     {
-      "id": "str005",
-      "text": "Open the module."
+      "id": "str005a",
+      "text": "Open the module. This widget works only in the module view."
     },
     {
-      "id": "str006",
-      "text": "Select the text artifacts."
+      "id": "str005b",
+      "text": "Read All Links button to load links from the entire module. "
     },
     {
-      "id": "str007",
-      "text": "Click the button to print the title of the selected text artifacts."
+      "id": "str005c",
+      "text": "Read Links button to load links from the selected items."
     },
+    {
+      "id": "str005d",
+      "text": "Once the links are loaded, select the link types you wish to convert by checking the corresponding checkboxes."
+    },
+    {
+      "id": "str005e",
+      "text": "Finally, click the Convert Links button to initiate the conversion process."
+    },
+  
     {
       "id": "str008",
       "text": "Settings: "

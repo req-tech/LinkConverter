@@ -25,6 +25,26 @@ function onBodyLoad() {
     adjustHeight();
 }
 
+// display the instructions on/off
+function show_instructions() {
+    // instructions is not visible toggle on, if visible toggle off
+    if (document.getElementById("instructions_div").style.display === "none") {
+        toggleElementVisibility('instructions_div', 'block');
+    } else {
+        toggleElementVisibility('instructions_div', 'none');
+    }
+}
+
+// display the instructions on/off
+function show_settings() {
+    // instructions is not visible toggle on, if visible toggle off
+    if (document.getElementById("settings_div").style.display === "none") {
+        toggleElementVisibility('settings_div', 'block');
+    } else {
+        toggleElementVisibility('settings_div', 'none');
+    }
+}
+
 // Function to show or hide HTML elements
 function toggleElementVisibility(elementId, displayStyle) {
     const element = document.getElementById(elementId);
@@ -54,6 +74,7 @@ function toggleVisibility(divId, buttonId, showText, hideText) {
 async function readLinksButton_onclick() {
     setContainerText("statusContainer", 'Loading...');
     widgetHandler.availableLinks = [];
+    console.log('Selected artifacts:', widgetHandler.selArtRef.length);
     if (!widgetHandler.selArtRef || widgetHandler.selArtRef.length === 0) {
         setContainerText("statusContainer", 'No text artifact selected.');
         return;
@@ -168,8 +189,7 @@ function displayLinkOptions(links) {
 
 // Function to handle the Convert Links button click
 async function convertLinksButtonOnClick(removeModuleLinks) {
-    console.log('Convert button clicked:', removeModuleLinks);
-   
+     
     // Get selected links
     const nodeList = document.querySelectorAll('#linkOptionsForm input[name="link"]');
     const checkboxes = [];
@@ -201,7 +221,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
 
             const existingTargetUri = targets[0]?.uri;
             const targetModuleUri = targets[0]?.moduleUri;
-            const { componentUri, format } = widgetHandler.selArtRef[0];
+            const { componentUri, format } = link.art;
 
             if (existingTargetUri === existingStartUri) {
                 console.error('Link target is same as source. Skipping link:', JSON.stringify(link));
@@ -216,7 +236,8 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
             try {
                 const startBoundArtifactData = await getModuleBinding(moduleUri);
                 const baseStartUri = getBoundArtifactUri(existingStartUri, startBoundArtifactData);
-                // if targetModuleUri is null we handle Twisted Link case Link starts from Module but links to base artifact
+                // if targetModuleUri is null we handle Twisted Link case 
+                // Link starts from Module but links to base artifact
                 let baseTargetUri;
                 if (targetModuleUri !== null) {
                     const targetBoundArtifactData = await getModuleBinding(targetModuleUri);
@@ -226,8 +247,32 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                 }
                 const baseStartRef = new RM.ArtifactRef(baseStartUri, componentUri, null, format);
                 const baseTargetRef = new RM.ArtifactRef(baseTargetUri, componentUri, null, format);
-                console.log('Base start ref:', baseStartUri, 'Target ref:', baseTargetUri);
-                await updateLinkContext(baseStartRef, linktype, baseTargetRef);
+                console.log('Base start Uri:', baseStartUri, 'Target Uri:', baseTargetUri);
+                // console.log('Check if Baselinks exists alreasy for Link type:', linktype);
+
+                // Check if Baselink is already present
+                await getLinksRaw(baseStartRef).then(async (response) => {
+                    let linkExists = false;
+                    console.log('Response:', JSON.stringify(response));
+                    for (let i = 0; i < response.length; i++) {
+                        
+                        // Loop through all targets of the base artifact to check if the link already exists
+                        for (let j = 0; j < response[0].targets.length; j++) {
+                            console.log('TargetsLenght' + response[i].targets.length + ' Checking link:', response[i].targets[j].uri, 'with base target:', baseTargetUri); 
+                            if (response[i].targets[j].uri === baseTargetUri) {
+                                console.log('...aaand found a match!');
+                                linkExists = true;
+                                break;
+                            }   
+                        }
+                    }
+                    if (linkExists) {
+                        console.log('Base link already exists, skipping creation.');
+                    } else {
+                        await updateLinkContext(baseStartRef, linktype, baseTargetRef);
+                    }
+                });
+                
             } catch (error) {
                 console.error('Error creating base links or fetching module binding for link target:', error);
                 continue;
@@ -252,6 +297,9 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
      
     toggleElementVisibility('reloadButton', 'block');
     toggleElementVisibility('convertButtonContainer', 'none');
+    // Empty the link container
+    const linkContainer = document.getElementById("linkContainer");
+    linkContainer.innerHTML = "";
 }
 
 // Function to update link context
@@ -328,6 +376,24 @@ function getBoundArtifactUri(artifactUri, moduleBindings) {
         throw new Error('No bound artifact found for the given artifact URI.');
     }
 }
+// FunctiongetLinksRaw that just returns the links
+function getLinksRaw(artifact) {
+    return new Promise((resolve, reject) => {
+        RM.Data.getLinkedArtifacts(artifact, function(response) {
+            if (response && response.code === RM.OperationResult.OPERATION_OK) {
+                const links = response.data.artifactLinks;
+                if (!links || links.length === 0) {
+                    resolve([]); // No links found
+                } else {
+                    resolve(links);
+                }
+            } else {
+                reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
+            }
+        });
+    });
+}
+
 
 // Function to get links of an artifact
 function getLinks(artifact) {
@@ -404,7 +470,7 @@ async function readAllLinksButtonOnClick() {
                 });
             });
        
-            widgetHandler.selArtRef = [res.data[0]];
+            // widgetHandler.selArtRef = [res.data[0]];
             for (const artifact of res.data) {
                 
                 try {
@@ -414,9 +480,8 @@ async function readAllLinksButtonOnClick() {
                     console.error('Error fetching links:', error);
                 }
             }
-            
-            // if (widgetHandler.availableLinks.length !== 0) {
-                const formLength = displayLinkOptions(widgetHandler.availableLinks);
+  
+            const formLength = displayLinkOptions(widgetHandler.availableLinks);
             if (formLength !== 0) {
                 setContainerText("statusContainer", 'Select Link types to convert.');
                 toggleElementVisibility('convertButtonContainer', 'block');
@@ -428,6 +493,7 @@ async function readAllLinksButtonOnClick() {
         } else {
             alert('You are not in a Module.');
         }
+
     } catch (error) {
         alert(error);
     }
