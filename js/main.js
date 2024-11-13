@@ -73,6 +73,7 @@ function toggleVisibility(divId, buttonId, showText, hideText) {
 // Function to handle the Read Links button click
 async function readLinksButton_onclick() {
     setContainerText("statusContainer", 'Loading...');
+    toggleElementVisibility('reloadButton', 'none');
     widgetHandler.availableLinks = [];
     console.log('Selected artifacts:', widgetHandler.selArtRef.length);
     if (!widgetHandler.selArtRef || widgetHandler.selArtRef.length === 0) {
@@ -454,7 +455,8 @@ async function readAllLinksButtonOnClick() {
                 if (response.code === RM.OperationResult.OPERATION_OK) {
                     resolve(response);
                 } else {
-                    reject('Error retrieving current artifact.');
+                    reject('Error retrieving current artifact. Open a module and try again.');
+                    setContainerText("statusContainer", 'Ready.');
                 }
             });
         });
