@@ -204,6 +204,7 @@ function displayLinkOptions(links) {
 async function convertLinksButtonOnClick(removeModuleLinks) {
 
     let actionVerb = removeModuleLinks ? 'Converted' : 'Created';
+    setContainerText("statusContainer", 'Processing Links...');
      
     // Get selected links
     const nodeList = document.querySelectorAll('#linkOptionsForm input[name="link"]');
@@ -526,11 +527,13 @@ async function readAllLinksButtonOnClick() {
             });
        
             // widgetHandler.selArtRef = [res.data[0]];
-            for (const artifact of res.data) {
-                
+            let index = 0;
+            for (const artifact of res.data ) {
+                index++;
                 try {
                     const links = await getLinks(artifact.ref);
                     widgetHandler.availableLinks.push(...links);
+                    setContainerText("statusContainer", `Reading Links...${index}`);
                 } catch (error) {
                     console.error('Error fetching links:', error);
                 }
