@@ -100,6 +100,7 @@
 				<!-- Div for Link conversion buttons - Function values is whether to delete Module Links -->
 				<div style="display: none;" id="convertButtonContainer">
 				<button style="font-size:12px; background-color:0d63fd;  border: 0d63fd; color:white;" id="convertLinksButton" onclick="convertLinksButtonOnClick(true)">Convert to Base Links</button>
+				&nbsp;
 				<button style="font-size:12px;" id="createBaseLinksButton" onclick="convertLinksButtonOnClick(false)">Add Base Links</button>
 				</div>
 

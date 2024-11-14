@@ -75,12 +75,22 @@ async function readLinksButton_onclick() {
     setContainerText("statusContainer", 'Loading...');
     toggleElementVisibility('reloadButton', 'none');
     widgetHandler.availableLinks = [];
+    // Clear out Tickbox form
+    const linkContainer = document.getElementById("linkContainer");
+    linkContainer.innerHTML = "";
+    toggleElementVisibility('convertButtonContainer', 'none');
+
     console.log('Selected artifacts:', widgetHandler.selArtRef.length);
     if (!widgetHandler.selArtRef || widgetHandler.selArtRef.length === 0) {
         setContainerText("statusContainer", 'No text artifact selected.');
         return;
     }
-    await readLinks(widgetHandler.selArtRef);
+    try {
+        await readLinks(widgetHandler.selArtRef);
+    } catch (error) {
+        console.error('Error reading links:', error);
+        setContainerText("container", 'Error reading links. Please check the artifact URI or permissions.');
+    }
     setContainerText("statusContainer", 'Select Link types to convert.');
     
     if (widgetHandler.availableLinks.length !== 0) {
@@ -124,7 +134,9 @@ function displayLinkOptions(links) {
             link.originalIndex = index;
 
             let linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
+            // Alias names to show in the UI
             linkTypeString = linkTypeString === 'Link' ? 'Link To' : linkTypeString;
+            linkTypeString = linkTypeString === 'satisfaction' ? 'Satisfied' : linkTypeString;
 
             if (!linkTypeCount[linkTypeString]) {
                 linkTypeCount[linkTypeString] = [];
@@ -190,6 +202,8 @@ function displayLinkOptions(links) {
 
 // Function to handle the Convert Links button click
 async function convertLinksButtonOnClick(removeModuleLinks) {
+
+    let actionVerb = removeModuleLinks ? 'Converted' : 'Created';
      
     // Get selected links
     const nodeList = document.querySelectorAll('#linkOptionsForm input[name="link"]');
@@ -214,6 +228,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
 
     for (const selectedGroup of selectedLinks) {
         const linkIndices = selectedGroup.split(",").map(Number);
+       
         
         for (const linkIndex of linkIndices) {
             const link = widgetHandler.availableLinks[linkIndex];
@@ -254,14 +269,30 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                 // Check if Baselink is already present
                 await getLinksRaw(baseStartRef).then(async (response) => {
                     let linkExists = false;
-                    console.log('Response:', JSON.stringify(response));
-                    for (let i = 0; i < response.length; i++) {
+                    for (let i = 0; i < response.length; i++) { 
                         
                         // Loop through all targets of the base artifact to check if the link already exists
+                        // targets not necessarily exist in all links
+
                         for (let j = 0; j < response[0].targets.length; j++) {
-                            console.log('TargetsLenght' + response[i].targets.length + ' Checking link:', response[i].targets[j].uri, 'with base target:', baseTargetUri); 
-                            if (response[i].targets[j].uri === baseTargetUri) {
-                                console.log('...aaand found a match!');
+                            if (!response[i].targets[j] || !response[i].targets[j].uri) {
+                                // Skip this iteration if targets[j] or targets[j].uri is not defined
+                                continue;
+                            }
+                            // console.log('TargetsLenght' + response[i].targets.length + ' Checking link:', response[i].targets[j].uri, 'with base target:', baseTargetUri); 
+                            let modulelt = linktype;
+                            if (typeof modulelt === 'object') {
+                                modulelt = modulelt.uri;
+                            }
+                            let baselt = response[i].linktype;
+                            if (typeof baselt === 'object') {
+                                baselt = baselt.uri;
+                            }
+                            console.log('TargetsLenght' + response[i].targets.length + 
+                                ' Checking link:', response[i].targets[j].uri, 'with base target:', baseTargetUri,
+                                'Module LinkType:', modulelt, 'Base LinkType:', baselt); 
+                            // If Base link already exists with same linktype, skip creation
+                            if ( response[i].targets[j].uri === baseTargetUri && baselt === modulelt) {
                                 linkExists = true;
                                 break;
                             }   
@@ -293,7 +324,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
         }
     }
 
-    const statusMessage = `Converted ${successfulConversions} links out of ${selectedLinks.length} link types successfully.`;
+    const statusMessage = `${actionVerb} ${successfulConversions} links out of ${selectedLinks.length} link types successfully.`;
     setContainerText("statusContainer", statusMessage);
      
     toggleElementVisibility('reloadButton', 'block');
@@ -305,31 +336,41 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
 
 // Function to update link context
 async function updateLinkContext(start, linkType, target) {
-    return new Promise((resolve, reject) => {
-        RM.Data.createLink(start, linkType, target, function(response) {
-            if (response.code !== RM.OperationResult.OPERATION_OK) {
-                console.error('Error creating link:', response);
-                reject(response);
-            } else {
-                console.log('Successfully created link between:', start, 'and', target);
-                resolve();
-            }
-        });
+    return new Promise(async (resolve, reject) => {
+        try {
+            await RM.Data.createLink(start, linkType, target, function(response) {
+                if (response.code !== RM.OperationResult.OPERATION_OK) {
+                    console.error('Error creating link:', response);
+                    reject(response);
+                } else {
+                    console.log('Successfully created link between:', start, 'and', target);
+                    resolve();
+                }
+            });
+        } catch (error) {
+            console.error('Error in createLink:', error);
+            reject(error);
+        }
     });
 }
 
 // Function to delete module links
 async function deleteModuleLinks(start, linkType, target) {
-    return new Promise((resolve, reject) => {
-        RM.Data.deleteLink(start, linkType, target, function(response) {
-            if (response.code !== RM.OperationResult.OPERATION_OK) {
-                console.error('Error deleting link:', response);
-                reject(response);
-            } else {
-                console.log('Successfully deleted link between:', start, 'and', target);
-                resolve();
-            }
-        });
+    return new Promise(async (resolve, reject) => {
+        try {
+            await RM.Data.deleteLink(start, linkType, target, function(response) {
+                if (response.code !== RM.OperationResult.OPERATION_OK) {
+                    console.error('Error deleting link:', response);
+                    reject(response);
+                } else {
+                    console.log('Successfully deleted link between:', start, 'and', target);
+                    resolve();
+                }
+            });
+        } catch (error) {
+            console.error('Error in deleteLink:', error);
+            reject(error);
+        }
     });
 }
 
@@ -361,7 +402,7 @@ async function getModuleBinding(moduleUri) {
         if (!response.ok) {
             throw new Error('Failed to fetch module binding. Response status: ' + response.status);
         }
-        return await response.json();
+        return response.json();
     } catch (error) {
         console.error(error);
         throw error;
@@ -379,27 +420,32 @@ function getBoundArtifactUri(artifactUri, moduleBindings) {
 }
 // FunctiongetLinksRaw that just returns the links
 function getLinksRaw(artifact) {
-    return new Promise((resolve, reject) => {
-        RM.Data.getLinkedArtifacts(artifact, function(response) {
-            if (response && response.code === RM.OperationResult.OPERATION_OK) {
-                const links = response.data.artifactLinks;
-                if (!links || links.length === 0) {
-                    resolve([]); // No links found
+    return new Promise(async (resolve, reject) => {
+        try {
+            await RM.Data.getLinkedArtifacts(artifact, function(response) {
+                if (response && response.code === RM.OperationResult.OPERATION_OK) {
+                    const links = response.data.artifactLinks;
+                    if (!links || links.length === 0) {
+                        resolve([]); // No links found
+                    } else {
+                        resolve(links);
+                    }
                 } else {
-                    resolve(links);
+                    reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
                 }
-            } else {
-                reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Error in getLinkedArtifacts:', error);
+            reject(error);
+        }
     });
 }
 
 
 // Function to get links of an artifact
 function getLinks(artifact) {
-    return new Promise((resolve, reject) => {
-        RM.Data.getLinkedArtifacts(artifact, function(response) {
+    return new Promise(async (resolve, reject) => {
+        await RM.Data.getLinkedArtifacts(artifact, function(response) {
             if (response && response.code === RM.OperationResult.OPERATION_OK) {
                 const links = response.data.artifactLinks;
 
@@ -449,9 +495,16 @@ function updateSelectAllCheckboxState() {
 async function readAllLinksButtonOnClick() {
     setContainerText("statusContainer", 'Loading...');
     widgetHandler.availableLinks = [];
+
+    // Clear out Tickbox form
+    const linkContainer = document.getElementById("linkContainer");
+    linkContainer.innerHTML = "";
+    toggleElementVisibility('convertButtonContainer', 'none');
+    toggleElementVisibility('reloadButton', 'none');
+
     try {
-        const response = await new Promise((resolve, reject) => {
-            RM.Client.getCurrentArtifact(function(response) {
+        const response = await new Promise(async (resolve, reject) => {
+            await RM.Client.getCurrentArtifact(function(response) {
                 if (response.code === RM.OperationResult.OPERATION_OK) {
                     resolve(response);
                 } else {
@@ -462,8 +515,8 @@ async function readAllLinksButtonOnClick() {
         });
 
         if (response.data.values[RM.Data.Attributes.FORMAT] === "Module") {
-            const res = await new Promise((resolve, reject) => {
-                RM.Data.getContentsAttributes(response.data.ref, [RM.Data.Attributes.PRIMARY_TEXT, 'http://purl.org/dc/terms/identifier'], function(res) {
+            const res = await new Promise(async (resolve, reject) => {
+                await RM.Data.getContentsAttributes(response.data.ref, [RM.Data.Attributes.PRIMARY_TEXT, 'http://purl.org/dc/terms/identifier'], function(res) {
                     if (res.code === RM.OperationResult.OPERATION_OK) {
                         resolve(res);
                     } else {
