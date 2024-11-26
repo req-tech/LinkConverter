@@ -81,8 +81,8 @@
 						 To begin, click the:</span> <br/>
 						<ol>
 							<li> <span id='str005a'>Open module. This widget works only in the Module View.</span> </li>	
-							<li> <span id='str005b'>"Read All Links" button to load links from the entire module</span> </li>
-							<li> <span id='str005c'>"Read Links" button to load links from the selected items.</span> </li>
+							<li> <span id='str005b'>"Whole Module" button to load links from the entire module</span> </li>
+							<li> <span id='str005c'>"Selected Items only" button to load links from the selected items.</span> </li>
 							<li> <span id='str005d'>Once the links are loaded, select the link types you wish to convert by checking the corresponding checkboxes</span></li>
 							<li> <span id='str005e'>Finally, click the "Convert Links" button to initiate the conversion process</span></li>
 						</ol>

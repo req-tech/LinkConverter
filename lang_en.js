@@ -22,11 +22,11 @@ lang_json = `{
     },
     {
       "id": "str005b",
-      "text": "Read All Links button to load links from the entire module. "
+      "text": "Whole Module- button to load links from the entire module. "
     },
     {
       "id": "str005c",
-      "text": "Read Links button to load links from the selected items."
+      "text": "Selected artifacts only- button to load links from the selected items."
     },
     {
       "id": "str005d",
