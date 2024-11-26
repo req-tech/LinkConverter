@@ -49,6 +49,7 @@ function show_settings() {
 function toggleElementVisibility(elementId, displayStyle) {
     const element = document.getElementById(elementId);
     if (element) {
+        console.log(`Toggling visibility of ${element.style.display} to ${displayStyle} for ${elementId}`);
         element.style.display = displayStyle;
         adjustHeight();
     } else {
@@ -73,7 +74,7 @@ function toggleVisibility(divId, buttonId, showText, hideText) {
 // Function to handle the Read Links button click
 async function readLinksButton_onclick() {
     setContainerText("statusContainer", 'Loading...');
-    toggleElementVisibility('reloadButton', 'none');
+    toggleElementVisibility('reloadContainer', 'none');
     widgetHandler.availableLinks = [];
     // Clear out Tickbox form
     const linkContainer = document.getElementById("linkContainer");
@@ -328,7 +329,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
     const statusMessage = `${actionVerb} ${successfulConversions} links out of ${selectedLinks.length} link types successfully.`;
     setContainerText("statusContainer", statusMessage);
      
-    toggleElementVisibility('reloadButton', 'block');
+    toggleElementVisibility('reloadContainer', 'block');
     toggleElementVisibility('convertButtonContainer', 'none');
     // Empty the link container
     const linkContainer = document.getElementById("linkContainer");
@@ -501,7 +502,7 @@ async function readAllLinksButtonOnClick() {
     const linkContainer = document.getElementById("linkContainer");
     linkContainer.innerHTML = "";
     toggleElementVisibility('convertButtonContainer', 'none');
-    toggleElementVisibility('reloadButton', 'none');
+    toggleElementVisibility('reloadContainer', 'none');
 
     try {
         const response = await new Promise(async (resolve, reject) => {

@@ -14,6 +14,10 @@
                 <!-- Language settings -->
                 <meta charset="utf-8">
                 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />    
+
+				<link rel="stylesheet" href="https://unpkg.com/carbon-components/css/carbon-components.min.css">
+				<script src="https://unpkg.com/carbon-components/scripts/carbon-components.min.js"></script>
+				
 				<script type="text/javascript" src="./lang_en.js" charset="utf-8"></script>       
     
 				<!-- Importing bootstrap and jQuery -->
@@ -50,6 +54,15 @@
                         tr:nth-child(even) {
                         background-color: #dddddd;
                     }
+					.custom-row {
+                        padding-top: 4px;
+                        padding-bottom: 4px;
+                        padding-left: 8px;
+                    }
+                    p:empty::before {
+                        content:"";
+                        display:inline-block;
+                    }
                 </style>
             </head>
 			<body onload="onBodyLoad()">
@@ -80,33 +93,40 @@
 					<div style="font-size:12px; display: none;" id='settings_div'>
 						This Widget has no settings.
 					</div>
-				<div style="font-size:12px; id="buttonContainer">
 
-				<button style="font-size:12px; background-color:0d63fd;  border: 0d63fd; color:white;" id="readAllLinksButton" onclick="readAllLinksButtonOnClick()">Whole Module</button>
-				&nbsp;
-				<button style="font-size:12px;" id="readLinksButton" onclick="readLinksButton_onclick()">Selected Items only</button>
-				<br>
+				<!-- Div for the form with links -->
+				<div class="bx--grid" style="padding-right:0; padding-left:0" id="buttonContainer">
+                    <div class="bx--col custom-row" >
+						<p class="bx--form__helper-text"><Strong>Convert Module Links to Base Links for:</Strong> </p>
+						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="readAllLinksButton" onclick="readAllLinksButtonOnClick()">Whole Module</button>
+					</div>
+					<div class="bx--col custom-row">
+						<button class="bx--btn bx--btn--default bx--btn--md" style="width:100%;max-width:none;" id="readLinksButton" onclick="readLinksButton_onclick()">Selected Items only</button>
+					</div>
+
+					<div class="bx--col custom-row bx--form__helper-text" id="statusContainer">
+					</div>					
+					<div class="bx--col custom-row bx--form__helper-text" id="linkContainer">
+						<!-- This is where the form with links will be appended -->
+					</div>
 				</div>
-
-				<div id="linkContainer">
-				<!-- This is where the form with links will be appended -->
-				</div>
-	
-				<!-- Div for additional messages or loading indicator -->
-				<div id="statusContainer" style="font-size:12px;">Read Module Links for base link conversion.</div>
-
-
 
 				<!-- Div for Link conversion buttons - Function values is whether to delete Module Links -->
-				<div style="display: none;" id="convertButtonContainer">
-				<button style="font-size:12px; background-color:0d63fd;  border: 0d63fd; color:white;" id="convertLinksButton" onclick="convertLinksButtonOnClick(true)">Convert to Base Links</button>
-				&nbsp;
-				<button style="font-size:12px;" id="createBaseLinksButton" onclick="convertLinksButtonOnClick(false)">Add Base Links</button>
+				<div class="bx--grid" style="padding-right:0; padding-left:0; display: none;" id="convertButtonContainer">
+                    <div class="bx--col custom-row">
+						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="convertLinksButton" onclick="convertLinksButtonOnClick(true)">Convert to Base Links</button>
+					</div>
+					<div class="bx--col custom-row">
+						<button class="bx--btn bx--btn--default bx--btn--md" style="width:100%;max-width:none;" id="createBaseLinksButton" onclick="convertLinksButtonOnClick(false)">Add Base Links</button>
+					</div>
 				</div>
 
-				<div id="reloadContainer">
-				<button style="font-size:12px; background-color:0d63fd;  border: 0d63fd; color:white; display: none;" id="reloadButton" onclick="window.top.location.reload()">Reload Page</button>
+				<div class="bx--grid" style="padding-right:0; padding-left:0; display: none;" id="reloadContainer">
+                    <div class="bx--col custom-row">
+						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="reloadButton" onclick="window.top.location.reload()">Reload Page</button>
+					</div>
 				</div>
+
 			</body>
 			</html>
 
