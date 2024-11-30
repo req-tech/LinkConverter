@@ -615,20 +615,21 @@ async function readWholeModuleButtonOnClick() {
             if (formLength !== 0 && run) {
                 setContainerText("statusContainer", 'Select Link types to convert.');
                 toggleElementVisibility('convertButtonContainer', 'block');
-                toggleElementVisibility('stopRun', 'none');
             } else {
                 if ( run ) {
                     setContainerText("statusContainer", `No ${linkDir} Module links found in the module.`);
                 } else {
                 toggleElementVisibility('linkContainer', 'none');
                 toggleElementVisibility('convertButtonContainer', 'none');
-                toggleElementVisibility('stopRun', 'none');
+                }
                 const wholeModuleButtton = document.getElementById("readWholeModuleButtonOnClick");
                 if (wholeModuleButtton) {
                     wholeModuleButtton.classList = "bx--btn bx--btn--primary bx--btn--md";
                     }
-                }
+
             }
+            // All done hide Stop button
+            toggleElementVisibility('stopRun', 'none');
 
         } else {
             alert('You are not in a Module.');
