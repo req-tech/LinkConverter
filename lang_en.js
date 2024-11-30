@@ -14,29 +14,20 @@ lang_json = `{
     },
     {
       "id": "str004a",
-      "text": "This widget allows you to read and convert links from selected artifacts or an entire module. To begin, click the:"
+      "text": "1. Choose either selected artifacts in a module or the whole module"
     },
     {
       "id": "str005a",
-      "text": "Open the module. This widget works only in the module view."
+      "text": "2. When the links are found, choose what links you would like to apply widget's functions on"
     },
     {
-      "id": "str005b",
-      "text": "Whole Module- button to load links from the entire module. "
+      "id": "str006a",
+      "text": "3. Choose between 'Add base links' or 'Convert to base links'"
     },
     {
-      "id": "str005c",
-      "text": "Selected artifacts only- button to load links from the selected items."
+      "id": "str007a",
+      "text": "4. Reload the page"
     },
-    {
-      "id": "str005d",
-      "text": "Once the links are loaded, select the link types you wish to convert by checking the corresponding checkboxes."
-    },
-    {
-      "id": "str005e",
-      "text": "Finally, click the Convert Links button to initiate the conversion process."
-    },
-  
     {
       "id": "str008",
       "text": "Settings: "
@@ -54,13 +45,12 @@ lang_json = `{
       "text": "Print Text Artifacts Titles"
     }
   ],
-  "codeStrings":
-      {
-          "cs001": "Hide instructions",
-          "cs002": "Show instructions",
-          "cs003": "Hide settings",
-          "cs004": "Change settings"
-      }
+  "codeStrings": {
+    "cs001": "Hide instructions",
+    "cs002": "Show instructions",
+    "cs003": "Hide settings",
+    "cs004": "Change settings"
+  }
 }`;
 
 lang = JSON.parse(lang_json);

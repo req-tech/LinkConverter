@@ -70,21 +70,19 @@
 					<table style='margin-top: 5px; border: 0'>
 						<tr>
 							<td style='text-align: center; font-size:12px;'><a onclick='show_instructions();' style='color:#00F; text-decoration: underline;' id='instructions_button'><span id='str001'></span></a></td>
-							<td style='text-align: center; font-size:12px;'><a onclick='show_settings();' style='color:#00F; text-decoration: underline;' id='settings_button'><span id='str002'></span></a></td>
+							<td style='text-align: center; font-size:12px; display: none;'><a onclick='show_settings();' style='color:#00F; text-decoration: underline;' id='settings_button'><span id='str002'></span></a></td>
 						</tr>
 					</table>
 
 					<hr style='padding: 0 !important; margin: 0 !important;'/>
 
 					<div style="font-size:12px; display: none;" id='instructions_div'>
-						<b><span id='str003'> </span> </b> <span id='str004a'>This widget allows you to read and convert links from selected artifacts or an entire module.
-						 To begin, click the:</span> <br/>
+						<b><span id='str003'></span> </b> <br/>
 						<ol>
-							<li> <span id='str005a'>Open module. This widget works only in the Module View.</span> </li>	
-							<li> <span id='str005b'>"Whole Module" button to load links from the entire module</span> </li>
-							<li> <span id='str005c'>"Selected Items only" button to load links from the selected items.</span> </li>
-							<li> <span id='str005d'>Once the links are loaded, select the link types you wish to convert by checking the corresponding checkboxes</span></li>
-							<li> <span id='str005e'>Finally, click the "Convert Links" button to initiate the conversion process</span></li>
+							<li> <span id='str004a'></span> </li>
+							<li> <span id='str005a'></span> </li>
+							<li> <span id='str006a'></span> </li>
+							<li> <span id='str007a'></span></li>
 						</ol>
 
 						<hr style='padding: 0 !important; margin: 0 !important;'/>
@@ -94,11 +92,10 @@
 						This Widget has no settings.
 					</div>
 
-				<!-- Div for the form with links -->
 				<div class="bx--grid" style="padding-right:0; padding-left:0" id="buttonContainer">
                     <div class="bx--col custom-row" >
 						<p class="bx--form__helper-text"><Strong>Convert Module Links to Base Links for:</Strong> </p>
-						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="readAllLinksButton" onclick="readAllLinksButtonOnClick()">Whole Module</button>
+						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="readWholeModuleButtonOnClick" onclick="readWholeModuleButtonOnClick()">Whole Module</button>
 					</div>
 					<div class="bx--col custom-row">
 						<button class="bx--btn bx--btn--default bx--btn--md" style="width:100%;max-width:none;" id="readLinksButton" onclick="readLinksButton_onclick()">Selected Items only</button>
@@ -106,7 +103,10 @@
 
 					<div class="bx--col custom-row bx--form__helper-text" id="statusContainer">
 					</div>					
-					<div class="bx--col custom-row bx--form__helper-text" id="linkContainer">
+					<div class="bx--col custom-row">
+						<button class="bx--btn bx--btn--danger bx--btn--md" style="width:100%;max-width:none;display: none;" id="stopRun" onclick="stopRun(false)">Stop</button>
+					</div>
+					<div class="bx--col custom-row bx--form-item bx--checkbox-wrapper"" id="linkContainer">
 						<!-- This is where the form with links will be appended -->
 					</div>
 				</div>
@@ -123,9 +123,11 @@
 
 				<div class="bx--grid" style="padding-right:0; padding-left:0; display: none;" id="reloadContainer">
                     <div class="bx--col custom-row">
-						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="reloadButton" onclick="window.top.location.reload()">Reload Page</button>
+						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="reloadButton" onclick="clickRefreshButton()">Reload Page</button>
 					</div>
 				</div>
+
+
 
 			</body>
 			</html>
