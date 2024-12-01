@@ -95,8 +95,25 @@
 				<div class="bx--grid" style="padding-right:0; padding-left:0" id="buttonContainer">
                     <div class="bx--col custom-row" >
 						<p class="bx--form__helper-text"><Strong>Convert Module Links to Base Links for:</Strong> </p>
+					<table style='margin-top: 5px; font-size:12px; border:0;'>
+						<tr>
+							<td style='text-align: right; border:0; ' >
+								<input class="bx--radio-button__appearance" type="radio" id="inlink" name="iolink" value="inlink" checked>
+							</td>
+							<td style='text-align: left; vertical-align: top;border:0;' >
+								<label class="bx--radio-button__label" for="inlink">Inlinks</label>		
+							</td>
+							<td style='text-align: center; border:0;'>
+								<input class="bx--radio-button__appearance" type="radio" id="outlink" name="iolink" value="outlink">
+							</td>
+							<td style='text-align: left; vertical-align: top; border:0;' >
+								<label class="bx--radio-button__label" for="outlink">Outlinks</label>
+							</td>
+						</tr>
+					</table>
 						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="readWholeModuleButtonOnClick" onclick="readWholeModuleButtonOnClick()">Whole Module</button>
 					</div>
+
 					<div class="bx--col custom-row">
 						<button class="bx--btn bx--btn--default bx--btn--md" style="width:100%;max-width:none;" id="readLinksButton" onclick="readLinksButton_onclick()">Selected Items only</button>
 					</div>

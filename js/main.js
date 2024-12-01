@@ -6,7 +6,7 @@ const widgetHandler = {
     selectAllLinks: false,
 };
 
-const linkDir = 'inlinks'; // Default link direction
+let linkDir = 'inlink'; // Default link direction
 
 let run = true;
 // Allow to stop long lasting Module search operaion
@@ -59,15 +59,19 @@ function clickRefreshButton() {
     const buttonElement = top.document.querySelector('[title="Refresh"]');
     // console.log(buttonElement);
     buttonElement.click();
-    // console.log("Clicked button with dynamic ID:", buttonElement.id);
-    location.reload();
+    toggleElementVisibility('reloadContainer', 'none');
+    const wholeModuleButtton = document.getElementById("readWholeModuleButtonOnClick");
+    if (wholeModuleButtton) {
+        wholeModuleButtton.classList = "bx--btn bx--btn--primary bx--btn--md";
+    }
+
 }
 
 // Function to show or hide HTML elements
 function toggleElementVisibility(elementId, displayStyle) {
     const element = document.getElementById(elementId);
     if (element) {
-        console.log(`Toggling visibility of ${element.style.display} to ${displayStyle} for ${elementId}`);
+        // console.log(`Toggling visibility of ${element.style.display} to ${displayStyle} for ${elementId}`);
         element.style.display = displayStyle;
         adjustHeight();
     } else {
@@ -123,9 +127,15 @@ function displayLinkOptions(links) {
             link.originalIndex = index;
 
             let linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
-            console.log('LinkType:', linkTypeString);
+            // console.log('LinkType:', linkTypeString);
             // Alias names to show in the UI
-            linkTypeString = linkTypeString === 'Link' ? 'Link To' : linkTypeString;
+            if (linkTypeString === 'Link' && linkDir === 'inlink') {
+                linkTypeString = 'Link From';
+            }
+            if (linkTypeString === 'Link' && linkDir === 'outlink') {
+                linkTypeString = 'Link To';
+            }
+           // linkTypeString = linkTypeString === 'Link' ? 'Link To' : linkTypeString;
             linkTypeString = linkTypeString === 'satisfaction' ? 'Satisfied' : linkTypeString;
 
             if (!linkTypeCount[linkTypeString]) {
@@ -134,7 +144,6 @@ function displayLinkOptions(links) {
             linkTypeCount[linkTypeString].push(link);
         // }
     });
-    console.log('LinkTypeCount:', JSON.stringify(linkTypeCount));
     // Indexing over all artifacts 
     Object.entries(linkTypeCount).forEach(([linkType, linkGroup], index) => {
         const checkbox = document.createElement("input");
@@ -147,7 +156,7 @@ function displayLinkOptions(links) {
         checkbox.style.width = "15px";
         checkbox.style.height = "15px";
         checkbox.style.position = "initial";
-        checkbox.style.margin = "0px 5px 0px 0px";
+        checkbox.style.margin = "2px 5px 2px 2px";
         checkbox.addEventListener("click", (e) => {
             e.stopPropagation();
             updateSelectAllCheckboxState();
@@ -171,12 +180,19 @@ function displayLinkOptions(links) {
         const selectAllCheckbox = document.createElement("input");
         selectAllCheckbox.type = "checkbox";
         selectAllCheckbox.id = "selectAllLinksCheckbox";
+        selectAllCheckbox.classList.add("bx--checkbox");
+        selectAllCheckbox.style.width = "15px";
+        selectAllCheckbox.style.height = "15px";
+        selectAllCheckbox.style.position = "initial";
+        selectAllCheckbox.style.margin = "2px 5px 2px 2px";
         selectAllCheckbox.onclick = toggleSelectAllLinks;
     
         const selectAllLabel = document.createElement("label");
         selectAllLabel.htmlFor = "selectAllLinksCheckbox";
         selectAllLabel.innerHTML = " Select All Links";
         selectAllLabel.style.fontSize = "12px";
+        selectAllLabel.classList.add("bx--checkbox-label-text"); 
+        selectAllLabel.style.verticalAlign = "top";  
     
         const selectAllLineBreak = document.createElement("br");
     
@@ -231,13 +247,10 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
 
     for (const selectedGroup of selectedLinks) {
         const linkIndices = selectedGroup.split(",").map(Number);
-        console.log('LinkIndices:', JSON.stringify(linkIndices));
-       
-        
+                
         for (const linkIndex of linkIndices) {
             const link = widgetHandler.availableLinks[linkIndex];
             const { art: { uri: existingStartUri, moduleUri }, targets, linktype } = link;
-            console.log('Converting link:', JSON.stringify(link));
             // if linktype is object create RM.LinkTypeDefinition
             let linktypeDng;
             if (typeof linktype === 'object') {
@@ -285,7 +298,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                         
                         // Loop through all targets of the base artifact to check if the link already exists
                         // targets not necessarily exist in all links
-                        console.log('Response' + i, " ", response[i], 'with base target:', baseTargetUri); 
+                        // console.log('Response' + i, " ", response[i], 'with base target:', baseTargetUri); 
 
                         for (let j = 0; j < response[i].targets.length; j++) {
                             if (!response[i].targets[j] || !response[i].targets[j].uri) {
@@ -301,9 +314,9 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                             if (typeof baselt === 'object') {
                                 baselt = baselt.uri;
                             }
-                            console.log('TargetsLenght' + response[i].targets.length + 
-                                ' Checking link:', response[i].targets[j].uri, 'with base target:', baseTargetUri,
-                                'Module LinkType:', modulelt, 'Base LinkType:', baselt); 
+                            // console.log('TargetsLenght' + response[i].targets.length + 
+                            //     ' Checking link:', response[i].targets[j].uri, 'with base target:', baseTargetUri,
+                            //     'Module LinkType:', modulelt, 'Base LinkType:', baselt); 
                             // If Base link already exists with same linktype, skip creation
                             if ( response[i].targets[j].uri === baseTargetUri && baselt === modulelt) {
                                 linkExists = true;
@@ -480,10 +493,10 @@ function getLinks(artifact) {
                             isNotBacklink = true; // Assume non-backlink if linktype is a string without direction
                         }
 
-                        return isModuleLink && isOutlink && isNotBacklink; // Skip backlinks and outlinks
+                        return isModuleLink && isOutlink && isNotBacklink; // Skip backlinks and outlink
                     });
                     
-                    resolve(filteredLinks);
+                   resolve(filteredLinks);
                 }
             } else {
                 reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
@@ -501,7 +514,6 @@ function getLinksDirection(artifact, linkDirection) {
                 if (!links || links.length === 0) {
                     resolve([]); // No links found
                 } else {
-                    // console.log('Links:', JSON.stringify(links));
                     const filteredLinks = links.filter(link => {
                         const isModuleLink = link.art.moduleUri != null;
                         let isOutlink = false;
@@ -515,15 +527,14 @@ function getLinksDirection(artifact, linkDirection) {
                             isInlink = link.linktype.includes(' ');
                         }
 
-                        if (linkDirection === 'outlinks') {
+                        if (linkDirection === 'outlink') {
                             return isModuleLink && isOutlink;
-                        } else if (linkDirection === 'inlinks') {
+                        } else if (linkDirection === 'inlink') {
                             return isModuleLink && isInlink;
                         } else {
                             return false; // Invalid linkDirection
                         }
                     });
-
                     // FlatMap to remove nested arrays
                     const flatLinks = filteredLinks.flatMap((item) =>
                         item.targets.map((target) => ({
@@ -564,6 +575,7 @@ async function readWholeModuleButtonOnClick() {
     toggleElementVisibility('stopRun', 'block');
     run = true;
     widgetHandler.availableLinks = [];
+    linkDir = $("input:radio[name=iolink]:checked").val();
 
     // Clear out Tickbox form
     const linkContainer = document.getElementById("linkContainer");
@@ -645,12 +657,13 @@ async function readLinksButton_onclick() {
     setContainerText("statusContainer", 'Loading...');
     toggleElementVisibility('reloadContainer', 'none');
     widgetHandler.availableLinks = [];
+    linkDir = $("input:radio[name=iolink]:checked").val();
     // Clear out Tickbox form
     const linkContainer = document.getElementById("linkContainer");
     linkContainer.innerHTML = "";
     toggleElementVisibility('convertButtonContainer', 'none');
 
-    console.log('Selected artifacts:', widgetHandler.selArtRef.length);
+    // console.log('Selected artifacts:', widgetHandler.selArtRef.length);
     if (!widgetHandler.selArtRef || widgetHandler.selArtRef.length === 0) {
         setContainerText("statusContainer", 'No text artifact selected.');
         return;
