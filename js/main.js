@@ -298,7 +298,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                         
                         // Loop through all targets of the base artifact to check if the link already exists
                         // targets not necessarily exist in all links
-                        // console.log('Response' + i, " ", response[i], 'with base target:', baseTargetUri); 
+                        // console.log('Response' + i, " ", JSON.stringify(response[i]), 'with base target:', baseTargetUri); 
 
                         for (let j = 0; j < response[i].targets.length; j++) {
                             if (!response[i].targets[j] || !response[i].targets[j].uri) {
@@ -307,18 +307,23 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                             }
                             
                             let modulelt = linktype;
-                            if (typeof modulelt === 'object') {
-                                modulelt = modulelt.uri;
+                            let moduledir = 'na';
+                            if (typeof modulelt === 'object') { // Built in links are Object custom link String
+                                modulelt = modulelt.uri; // Check also direction, which is in Built in Links in own JSON element
+                                moduledir = linktype.direction;
                             }
                             let baselt = response[i].linktype;
+                            let basedir = 'na';
                             if (typeof baselt === 'object') {
                                 baselt = baselt.uri;
+                                basedir = response[i].linktype.direction;
                             }
-                            // console.log('TargetsLenght' + response[i].targets.length + 
-                            //     ' Checking link:', response[i].targets[j].uri, 'with base target:', baseTargetUri,
-                            //     'Module LinkType:', modulelt, 'Base LinkType:', baselt); 
+                            
+                            console.log('TargetsLenght' + response[i].targets.length + 
+                                ' Checking link:', response[i].targets[j].uri, 'with base target:', baseTargetUri,
+                                'Module LinkType:', modulelt, 'Base LinkType:', baselt, 'Module LinkDir:', moduledir, 'Base LinkDir:', basedir); 
                             // If Base link already exists with same linktype, skip creation
-                            if ( response[i].targets[j].uri === baseTargetUri && baselt === modulelt) {
+                            if ( response[i].targets[j].uri === baseTargetUri && baselt === modulelt && basedir === moduledir) {
                                 linkExists = true;
                                 console.log('Base link already exists, skipping creation:', response[i].targets[j].uri, 'with base target:', baseTargetUri);
                                 break;
@@ -473,39 +478,39 @@ function getLinksRaw(artifact) {
 
 
 // Function to get links of an artifact
-function getLinks(artifact) {
-    return new Promise(async (resolve, reject) => {
-        await RM.Data.getLinkedArtifacts(artifact, function(response) {
-            if (response && response.code === RM.OperationResult.OPERATION_OK) {
-                const links = response.data.artifactLinks;
+// function getLinks(artifact) {
+//     return new Promise(async (resolve, reject) => {
+//         await RM.Data.getLinkedArtifacts(artifact, function(response) {
+//             if (response && response.code === RM.OperationResult.OPERATION_OK) {
+//                 const links = response.data.artifactLinks;
 
-                if (!links || links.length === 0) {
-                    resolve([]); // No links found
-                } else {
-                    const filteredLinks = links.filter(link => {
-                        const isModuleLink = link.art.moduleUri != null;
-                        let isOutlink = false;
-                        let isNotBacklink = false;
+//                 if (!links || links.length === 0) {
+//                     resolve([]); // No links found
+//                 } else {
+//                     const filteredLinks = links.filter(link => {
+//                         const isModuleLink = link.art.moduleUri != null;
+//                         let isOutlink = false;
+//                         let isNotBacklink = false;
 
-                        if (typeof link.linktype === 'object' && link.linktype.uri) {
-                            isOutlink = link.linktype.direction === '_SUB';
-                            isNotBacklink = link.linktype.direction !== '_OBJ';
-                        } else if (typeof link.linktype === 'string') {
-                            isOutlink = !link.linktype.includes(' ');
-                            isNotBacklink = true; // Assume non-backlink if linktype is a string without direction
-                        }
+//                         if (typeof link.linktype === 'object' && link.linktype.uri) {
+//                             isOutlink = link.linktype.direction === '_SUB';
+//                             isNotBacklink = link.linktype.direction !== '_OBJ';
+//                         } else if (typeof link.linktype === 'string') {
+//                             isOutlink = !link.linktype.includes(' ');
+//                             isNotBacklink = true; // Assume non-backlink if linktype is a string without direction
+//                         }
 
-                        return isModuleLink && isOutlink && isNotBacklink; // Skip backlinks and outlink
-                    });
+//                         return isModuleLink && isOutlink && isNotBacklink; // Skip backlinks and outlink
+//                     });
                     
-                   resolve(filteredLinks);
-                }
-            } else {
-                reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
-            }
-        });
-    });
-}
+//                    resolve(filteredLinks);
+//                 }
+//             } else {
+//                 reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
+//             }
+//         });
+//     });
+// }
 
 function getLinksDirection(artifact, linkDirection) {
     return new Promise(async (resolve, reject) => {
