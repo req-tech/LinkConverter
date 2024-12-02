@@ -238,7 +238,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
     // getSelectedLinks();
     // return 
     if (selectedLinks.length === 0) {
-        setContainerText("statusContainer", 'No links selected for conversion.');
+        alert('No links selected for conversion.');
         return;
     }
     setContainerText("statusContainer", 'Processing Links...');
