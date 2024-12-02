@@ -241,7 +241,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
         alert('No links selected for conversion.');
         return;
     }
-    setContainerText("statusContainer", 'Processing Links...');
+    setContainerText("statusContainer", 'Processing Links. Do not reload page.');
 
     let successfulConversions = 0;
 
@@ -336,7 +336,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                 console.error('Error creating base links or fetching module binding for link target:', error);
                 continue;
             }
-            
+
             if (removeModuleLinks) {
                 try {
                     const startRef = new RM.ArtifactRef(existingStartUri, componentUri, moduleUri, format);
@@ -349,6 +349,8 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
             }
 
             successfulConversions++;
+            // Print status
+            setContainerText("statusContainer", `Processing Links ${successfulConversions}. Do not reload page.`);
         }
     }
 
