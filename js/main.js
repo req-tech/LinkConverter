@@ -31,6 +31,7 @@ function adjustHeight() {
 function onBodyLoad() {
     loadLanguage(); // Load the text according to the language file set in main.xml
     adjustHeight();
+    widgetHandler.availableLinks = [];
 }
 
 // display the instructions on/off
@@ -64,6 +65,7 @@ function clickRefreshButton() {
     if (wholeModuleButtton) {
         wholeModuleButtton.classList = "bx--btn bx--btn--primary bx--btn--md";
     }
+    widgetHandler.availableLinks = [];
 
 }
 
@@ -289,8 +291,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                 const baseTargetRef = new RM.ArtifactRef(baseTargetUri, componentUri, null, format);
                 console.log('Base start Uri:', baseStartUri, ' Link Type;', JSON.stringify(linktype),' Target Uri:', baseTargetUri);
                 // console.log('Check if Baselinks exists alreasy for Link type:', linktype);
-
-                // Check if Baselink is already present
+                // Check if Baselink is already exists
                 await getLinksRaw(baseStartRef).then(async (response) => {
                     let linkExists = false;
                     // console.log('ResponseLenght' + response.length );
