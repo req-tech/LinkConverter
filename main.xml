@@ -25,7 +25,7 @@
 				<script src="js/carbon-components.min.js"></script>
 
                 <!-- Main .js-code -->
-				<script type="text/javascript" src="./js/main.js" charset="utf-8"></script> 
+				<script type="text/javascript" src="./js/main2.js" charset="utf-8"></script> 
 
                 <style>
                     #container::-webkit-scrollbar {
@@ -75,7 +75,7 @@
 
 					<hr style='padding: 0 !important; margin: 0 !important;'/>
 
-					<div style="font-size:12px; display: none;" id='instructions_div'>
+					<div class="bx--grid" style="font-size:12px; display: none;" id='instructions_div'>
 						<b><span id='str003'></span> </b> <br/>
 						<ol>
 							<li> <span id='str004a'></span> </li>
@@ -87,7 +87,7 @@
 						<hr style='padding: 0 !important; margin: 0 !important;'/>
 					</div>
 					
-					<div style="font-size:12px; display: none;" id='settings_div'>
+					<div class="bx--grid"  style="font-size:12px; display: none;" id='settings_div'>
 						This Widget has no settings.
 					</div>
 

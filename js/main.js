@@ -34,6 +34,17 @@ function onBodyLoad() {
     widgetHandler.availableLinks = [];
 }
 
+function initWidget() {
+    setContainerText("statusContainer", '');
+    // setContainerText("container", '');
+    toggleElementVisibility('linkContainer', 'none');
+    toggleElementVisibility('convertButtonContainer', 'none');
+    toggleElementVisibility('reloadContainer', 'none');
+    toggleElementVisibility('stopRun', 'block');
+    run = true;
+    widgetHandler.availableLinks = [];
+}
+
 // display the instructions on/off
 function show_instructions() {
     // instructions is not visible toggle on, if visible toggle off
@@ -101,7 +112,7 @@ async function readLinks(artifacts) {
     for (const artifact of artifacts) {
         if (!artifact.moduleUri) {
             console.error('Module URI not found for artifact:', artifact);
-            setContainerText("container", 'Module URI not found for selected artifact.');
+            setContainerText("statusContainer", 'Module URI not found for selected artifact.');
             continue;
         }
         try {
@@ -109,7 +120,7 @@ async function readLinks(artifacts) {
             widgetHandler.availableLinks.push(...links);
         } catch (error) {
             console.error('Error fetching links:', error);
-            setContainerText("container", 'Error fetching links. Please check the artifact URI or permissions.');
+            setContainerText("statusContainer", 'Error fetching links. Please check the artifact URI or permissions.');
         }
     }
     displayLinkOptions(widgetHandler.availableLinks);  
@@ -296,11 +307,8 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                     let linkExists = false;
                     // console.log('ResponseLenght' + response.length );
                     for (let i = 0; i < response.length; i++) { 
-                        
                         // Loop through all targets of the base artifact to check if the link already exists
-                        // targets not necessarily exist in all links
-                        // console.log('Response' + i, " ", JSON.stringify(response[i]), 'with base target:', baseTargetUri); 
-
+                        // targets not necessarily exist in all links 
                         for (let j = 0; j < response[i].targets.length; j++) {
                             if (!response[i].targets[j] || !response[i].targets[j].uri) {
                                 // Skip this iteration if targets[j] or targets[j].uri is not defined
@@ -477,42 +485,7 @@ function getLinksRaw(artifact) {
     });
 }
 
-
 // Function to get links of an artifact
-// function getLinks(artifact) {
-//     return new Promise(async (resolve, reject) => {
-//         await RM.Data.getLinkedArtifacts(artifact, function(response) {
-//             if (response && response.code === RM.OperationResult.OPERATION_OK) {
-//                 const links = response.data.artifactLinks;
-
-//                 if (!links || links.length === 0) {
-//                     resolve([]); // No links found
-//                 } else {
-//                     const filteredLinks = links.filter(link => {
-//                         const isModuleLink = link.art.moduleUri != null;
-//                         let isOutlink = false;
-//                         let isNotBacklink = false;
-
-//                         if (typeof link.linktype === 'object' && link.linktype.uri) {
-//                             isOutlink = link.linktype.direction === '_SUB';
-//                             isNotBacklink = link.linktype.direction !== '_OBJ';
-//                         } else if (typeof link.linktype === 'string') {
-//                             isOutlink = !link.linktype.includes(' ');
-//                             isNotBacklink = true; // Assume non-backlink if linktype is a string without direction
-//                         }
-
-//                         return isModuleLink && isOutlink && isNotBacklink; // Skip backlinks and outlink
-//                     });
-                    
-//                    resolve(filteredLinks);
-//                 }
-//             } else {
-//                 reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
-//             }
-//         });
-//     });
-// }
-
 function getLinksDirection(artifact, linkDirection) {
     return new Promise(async (resolve, reject) => {
         await RM.Data.getLinkedArtifacts(artifact, function(response) {
@@ -554,7 +527,6 @@ function getLinksDirection(artifact, linkDirection) {
                     // Resolve the flattened links  
                     // console.log('Flattened Links:', JSON.stringify(flatLinks));
                     resolve(flatLinks);
-                    // resolve(filteredLinks);
                 }
             } else {
                 reject('Error fetching links. Please check the artifact URI or ensure the context is correct.');
@@ -578,18 +550,10 @@ function updateSelectAllCheckboxState() {
 }
 
 // Function to handle Read All Links button click
-async function readWholeModuleButtonOnClick() {
-    setContainerText("statusContainer", 'Loading...');
-    toggleElementVisibility('stopRun', 'block');
-    run = true;
-    widgetHandler.availableLinks = [];
+async function readWholeModuleButtonOnClick() { 
+    initWidget();
     linkDir = $("input:radio[name=iolink]:checked").val();
-
-    // Clear out Tickbox form
-    const linkContainer = document.getElementById("linkContainer");
-    linkContainer.innerHTML = "";
-    toggleElementVisibility('convertButtonContainer', 'none');
-    toggleElementVisibility('reloadContainer', 'none');
+    setContainerText("statusContainer", 'Reading Links...');
 
     try {
         const response = await new Promise(async (resolve, reject) => {
@@ -603,9 +567,9 @@ async function readWholeModuleButtonOnClick() {
             });
         });
 
-        if (response.data.values[RM.Data.Attributes.FORMAT] === "Module") {
+        if (response.data.values[RM.Data.Attributes.FORMAT] === RM.Data.Formats.MODULE) {
             const res = await new Promise(async (resolve, reject) => {
-                await RM.Data.getContentsAttributes(response.data.ref, ['http://purl.org/dc/terms/identifier'], function(res) {
+                await RM.Data.getContentsAttributes(response.data.ref, [RM.Data.Attributes.IDENTIFIER], function(res) {
                     if (res.code === RM.OperationResult.OPERATION_OK) {
                         resolve(res);
                     } else {
@@ -646,11 +610,9 @@ async function readWholeModuleButtonOnClick() {
                 if (wholeModuleButtton) {
                     wholeModuleButtton.classList = "bx--btn bx--btn--primary bx--btn--md";
                     }
-
             }
             // All done hide Stop button
             toggleElementVisibility('stopRun', 'none');
-
         } else {
             alert('You are not in a Module.');
         }
@@ -662,14 +624,9 @@ async function readWholeModuleButtonOnClick() {
 
 // Function to handle the Read Links button click
 async function readLinksButton_onclick() {
-    setContainerText("statusContainer", 'Loading...');
-    toggleElementVisibility('reloadContainer', 'none');
-    widgetHandler.availableLinks = [];
+    initWidget();
+    setContainerText("statusContainer", 'Reading Links...');
     linkDir = $("input:radio[name=iolink]:checked").val();
-    // Clear out Tickbox form
-    const linkContainer = document.getElementById("linkContainer");
-    linkContainer.innerHTML = "";
-    toggleElementVisibility('convertButtonContainer', 'none');
 
     // console.log('Selected artifacts:', widgetHandler.selArtRef.length);
     if (!widgetHandler.selArtRef || widgetHandler.selArtRef.length === 0) {
@@ -680,7 +637,7 @@ async function readLinksButton_onclick() {
         await readLinks(widgetHandler.selArtRef);
     } catch (error) {
         console.error('Error reading links:', error);
-        setContainerText("container", 'Error reading links. Please check the artifact URI or permissions.');
+        setContainerText("statusContainer", 'Error reading links. Please check the artifact URI or permissions.');
     }
     setContainerText("statusContainer", 'Select Link types to convert.');
     
