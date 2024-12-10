@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Module specificationVersion="1.5_RC">
+<Module specificationVersion="1.6_RC">
 <ModulePrefs title="Link Converter" height="130" scrolling="true">
 	<Require feature="com.ibm.rdm.rm.api"/>
 	<Require feature="dynamic-height"/>
@@ -25,7 +25,7 @@
 				<script src="js/carbon-components.min.js"></script>
 
                 <!-- Main .js-code -->
-				<script type="text/javascript" src="./js/main_lc.js" charset="utf-8"></script> 
+				<script type="text/javascript" src="./js/main_lc_test.js" charset="utf-8"></script> 
 
                 <style>
                     #container::-webkit-scrollbar {
@@ -96,17 +96,17 @@
 						<p class="bx--form__helper-text"><Strong>Convert Module Links to Base Links for:</Strong> </p>
 					<table style='margin-top: 5px; font-size:12px; border:0;'>
 						<tr>
-							<td style='text-align: right; border:0; ' >
-								<input class="bx--radio-button__appearance" type="radio" id="inlink" name="iolink" value="inlink" checked>
-							</td>
-							<td style='text-align: left; vertical-align: top;border:0;' >
-								<label class="bx--radio-button__label" for="inlink">Incoming <strong style="color: faa51b;">&lt</strong></label>		
-							</td>
 							<td style='text-align: center; border:0;'>
-								<input class="bx--radio-button__appearance" type="radio" id="outlink" name="iolink" value="outlink">
+								<input class="bx--radio-button__appearance" type="radio" id="outlink" name="iolink" value="outlink" checked>
 							</td>
 							<td style='text-align: left; vertical-align: top; border:0;' >
 								<label class="bx--radio-button__label" for="outlink">Outgoing <strong style="color: ca6f98;">&gt</strong></label>
+							</td>
+							<td style='text-align: right; border:0; ' >
+								<input class="bx--radio-button__appearance" type="radio" id="inlink" name="iolink" value="inlink">
+							</td>
+							<td style='text-align: left; vertical-align: top;border:0;' >
+								<label class="bx--radio-button__label" for="inlink">Incoming <strong style="color: faa51b;">&lt</strong></label>		
 							</td>
 						</tr>
 					</table>
@@ -118,7 +118,9 @@
 					</div>
 
 					<div class="bx--col custom-row bx--form__helper-text" id="statusContainer">
-					</div>					
+					</div>	
+					<div class="bx--col custom-row bx--form__helper-text" id="moduleStatusContainer">
+					</div>						
 					<div class="bx--col custom-row">
 						<button class="bx--btn bx--btn--danger bx--btn--md" style="width:100%;max-width:none;display: none;" id="stopRun" onclick="stopRun(false)">Stop</button>
 					</div>
