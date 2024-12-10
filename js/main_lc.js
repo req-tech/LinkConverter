@@ -294,6 +294,8 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
 
             try {
                 const startBoundArtifactData = await getModuleBinding(moduleUri);
+                console.log('Start Bound Artifact Data:', startBoundArtifactData);
+                console.log('Start URI:', existingStartUri, ' Target URI:', existingTargetUri);
                 const baseStartUri = getBoundArtifactUri(existingStartUri, startBoundArtifactData);
                 // if targetModuleUri is null we handle Twisted Link case 
                 // Link starts from Module but links to base artifact
@@ -450,6 +452,7 @@ async function getModuleBinding(moduleUri) {
         if (!response.ok) {
             throw new Error('Failed to fetch module binding. Response status: ' + JSON.stringify(response));
         }
+        console.log('Module Binding Response:', JSON.stringify(response));
         return response.json();
     } catch (error) {
         console.error(error);
@@ -459,6 +462,8 @@ async function getModuleBinding(moduleUri) {
 
 // Function to get bound artifact URI aka. Base Artifact
 function getBoundArtifactUri(artifactUri, moduleBindings) {
+    console.log('Fetching bound artifact for:', artifactUri);
+    console.log('Module Bindings in getBoundArtifact:', moduleBindings);
     const binding = moduleBindings.find(item => item.uri === artifactUri);
     if (binding && binding.boundArtifact) {
         return binding.boundArtifact;
