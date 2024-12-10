@@ -147,12 +147,23 @@ function displayLinkOptions(links) {
             let linkTypeString = typeof link.linktype === 'object' ? link.linktype.uri.split('/').pop() : link.linktype;
             // console.log('LinkType:', linkTypeString);
             // Alias names to show in the UI
-            if (linkTypeString === 'Link' && linkDir === 'inlink') {
-                linkTypeString = 'Link From';
-            }
+
+            // Link
             if (linkTypeString === 'Link' && linkDir === 'outlink') {
                 linkTypeString = 'Link To';
             }
+            if (linkTypeString === 'Link' && linkDir === 'inlink') {
+                linkTypeString = 'Link From';
+            }
+            // Råd
+            if (linkTypeString === 'rad' && linkDir === 'outlink') {
+                linkTypeString = 'Råd för';
+            }
+            if (linkTypeString === 'rad' && linkDir === 'inlink') {
+                linkTypeString = 'Har Råd';
+            }
+            
+
            // linkTypeString = linkTypeString === 'Link' ? 'Link To' : linkTypeString;
             linkTypeString = linkTypeString === 'satisfaction' ? 'Satisfied' : linkTypeString;
 

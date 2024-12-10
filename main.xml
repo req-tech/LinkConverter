@@ -100,13 +100,13 @@
 								<input class="bx--radio-button__appearance" type="radio" id="inlink" name="iolink" value="inlink" checked>
 							</td>
 							<td style='text-align: left; vertical-align: top;border:0;' >
-								<label class="bx--radio-button__label" for="inlink">Inlinks</label>		
+								<label class="bx--radio-button__label" for="inlink">Incoming <strong style="color: faa51b;">&lt</strong></label>		
 							</td>
 							<td style='text-align: center; border:0;'>
 								<input class="bx--radio-button__appearance" type="radio" id="outlink" name="iolink" value="outlink">
 							</td>
 							<td style='text-align: left; vertical-align: top; border:0;' >
-								<label class="bx--radio-button__label" for="outlink">Outlinks</label>
+								<label class="bx--radio-button__label" for="outlink">Outgoing <strong style="color: ca6f98;">&gt</strong></label>
 							</td>
 						</tr>
 					</table>
