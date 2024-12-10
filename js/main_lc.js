@@ -193,6 +193,7 @@ function displayLinkOptions(links) {
         form.appendChild(label);
         form.appendChild(lineBreak);
     });
+    
 
     if (Object.keys(linkTypeCount).length > 1) {
         const selectAllCheckbox = document.createElement("input");
@@ -360,7 +361,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
 
                     await deleteModuleLink(startRef, linktypeDng, targetRef);
                 } catch (error) {
-                    console.error('Error deleting module links:', error);
+                    console.error('Error deleting module links:', error, moduleUri, existingStartUri, existingTargetUri);
                 }
             }
 
