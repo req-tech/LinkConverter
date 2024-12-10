@@ -193,7 +193,7 @@ function displayLinkOptions(links) {
         form.appendChild(label);
         form.appendChild(lineBreak);
     });
-    
+
 
     if (Object.keys(linkTypeCount).length > 1) {
         const selectAllCheckbox = document.createElement("input");
@@ -448,7 +448,7 @@ async function getModuleBinding(moduleUri) {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to fetch module binding. Response status: ' + response.status);
+            throw new Error('Failed to fetch module binding. Response status: ' + JSON.stringify(response));
         }
         return response.json();
     } catch (error) {
