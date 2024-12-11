@@ -415,7 +415,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                 });
                 
             } catch (error) {
-                console.error('Error creating base links or fetching module binding for link target:', error);
+                console.error('Error creating base links or fetching module binding for link target:', error.message, error.stack);
                 continue;
             }
 
@@ -528,12 +528,18 @@ function fetchCorrelatorData(url, headers, body) {
 }
 
 async function getCurrentUriCorrelator(legacyUrl) {
-    const url = "https://homie.byte.fi:9443/rm/correlator?mode=legacyToCurrent";
+    // Get host Url from browser
+    const hostUrl = window.location.origin;
+    const url = `${hostUrl}/rm/correlator?mode=legacyToCurrent`;
+    const fullUrl = window.location.href;
+    const urlObj = new URL(fullUrl);
+    const params = new URLSearchParams(urlObj.hash.substring(1)); // Extract parameters from the hash part of the URL
+    const vvcConf = params.get('vvc.configuration'); // Ensure vvcConf is declared with const
 
     const headers = {
         "Content-Type": "application/json",
         "DoorsRP-Request-Type": "private",
-        "vvc.configuration": "https://homie.byte.fi:9443/rm/cm/stream/_222bppFmEe-Oy5UELFqR4Q"
+        "vvc.configuration": vvcConf
     };
 
     const body = JSON.stringify([legacyUrl]); // Input passed dynamically
@@ -546,7 +552,6 @@ async function getCurrentUriCorrelator(legacyUrl) {
         throw error; // Rethrow for caller to handle
     }
 }
-
 // Function to get module binding
 async function getModuleBinding(moduleUri) {
     console.log('Fetching module binding for:', moduleUri);
@@ -574,26 +579,34 @@ async function getModuleBinding(moduleUri) {
 
             for (let index = 0; index < data.length; index++) {
                 const item = data[index];
-                if (index > 0 && !item.uri.includes("BI_") && !item.uri.includes("TX_") && !item.uri.includes("WR_")) { // Exclude known non-legacy items
+                if (index > 0 && 
+                    !item.uri.includes("resources/BI_") && !item.uri.includes("resources/TX_") && !item.uri.includes("resources/WR_") &&
+                    !item.boundArtifact.includes("resources/BI_") && !item.boundArtifact.includes("resources/TX_") && !item.boundArtifact.includes("resources/WR_")
+                ) { // Exclude known non-legacy items
                     // Get Legacy
                     legacyArtifacts++;
                     console.log(`Item ${index} contains Legacy item:`, item);
                     setContainerText("moduleStatusContainer", `Found ${legacyArtifacts} of ${data.length-1} legacy artifacts in the module. Widget might fail to create Base links for these.`);
                     // if (index === 3) { // This is just to check the correlator for once
                         try {
-                            const cdata = await getCurrentUriCorrelator(item.uri);
-                            console.log('Correlator:', JSON.stringify(cdata));
+                            const cdataUri = await getCurrentUriCorrelator(item.uri);
+                            const cdataBinding = await getCurrentUriCorrelator(item.boundArtifact);
+                            console.log('Correlator:', JSON.stringify(cdataUri));
                             // Update the uri value with the new value from cdata
-                            const newUri = cdata[item.uri]; // Extract the new URI from the correlator response
+                            const newUri = cdataUri[item.uri]; // Extract the new URI from the correlator response
+                            const newBinding = cdataBinding[item.boundArtifact]; // Extract the new URI from the correlator response    
                             if (newUri) {
                                 item.uri = newUri; // Update the item's URI
+                            }
+                            if (newBinding) {
+                                item.boundArtifact = newBinding; // Update the item's boundArtifact
                             }
                         } catch (error) {
                             console.error('Error in getCurrentUriCorrelator:', error);
                         }
                     // }
                 }
-            } 
+            }
         } else {
             console.log("No array found. Full Data:", data);
         }
@@ -612,7 +625,7 @@ function getBoundArtifactUri(artifactUri, moduleBindings) {
     if (binding && binding.boundArtifact) {
         return binding.boundArtifact;
     } else {
-        throw new Error('No bound artifact found for the given artifact URI.');
+        throw new Error(`No bound artifact found for the given artifact URI: ${artifactUri} : In module bindings: ${JSON.stringify(moduleBindings)}`);
     }
 }
 
