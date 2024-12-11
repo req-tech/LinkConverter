@@ -321,6 +321,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
             const { art: { uri: existingStartUri, moduleUri }, targets, linktype } = link;
 
             // read moduleBinding for moduleUri, but only if it is not read yet
+            console.log('Module Binding Length:', currentModuleBinding.length);
             if (currentModuleBinding.length === 0) {
                 try {
                     currentModuleBinding = await getModuleBinding(moduleUri);
@@ -577,15 +578,15 @@ async function getModuleBinding(moduleUri) {
         if (Array.isArray(data)) {
             console.log("Checking for Legacy items...");
 
-            for (let index = 0; index < data.length; index++) {
+            for (let index = 1; index < data.length; index++) {
                 const item = data[index];
-                if (index > 0 && 
-                    !item.uri.includes("resources/BI_") && !item.uri.includes("resources/TX_") && !item.uri.includes("resources/WR_") &&
-                    !item.boundArtifact.includes("resources/BI_") && !item.boundArtifact.includes("resources/TX_") && !item.boundArtifact.includes("resources/WR_")
+                if ( // Check if the URI or boundArtifact contains Legacy items, skip for new installations
+                    ( !item.uri.includes("resources/BI_") && !item.uri.includes("resources/TX_") && !item.uri.includes("resources/WR_")) ||
+                    ( !item.boundArtifact.includes("resources/BI_") && !item.boundArtifact.includes("resources/TX_") && !item.boundArtifact.includes("resources/WR_"))
                 ) { // Exclude known non-legacy items
                     // Get Legacy
                     legacyArtifacts++;
-                    console.log(`Item ${index} contains Legacy item:`, item);
+                    console.log(`Item ${index} contains Legacy item:`, item.uri);
                     setContainerText("moduleStatusContainer", `Found ${legacyArtifacts} of ${data.length-1} legacy artifacts in the module. Widget might fail to create Base links for these.`);
                     // if (index === 3) { // This is just to check the correlator for once
                         try {
