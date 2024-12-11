@@ -36,13 +36,14 @@ function onBodyLoad() {
 
 function initWidget() {
     setContainerText("statusContainer", '');
-    // setContainerText("container", '');
+    setContainerText("moduleStatusContainer", '');
     toggleElementVisibility('linkContainer', 'none');
     toggleElementVisibility('convertButtonContainer', 'none');
     toggleElementVisibility('reloadContainer', 'none');
     // toggleElementVisibility('stopRun', 'block');
     run = true;
     widgetHandler.availableLinks = [];
+    adjustHeight();
 }
 
 // display the instructions on/off
@@ -73,6 +74,7 @@ function clickRefreshButton() {
     buttonElement.click();
     toggleElementVisibility('reloadContainer', 'none');
     setContainerText("statusContainer", '');
+    setContainerText("moduleStatusContainer", '');
     const wholeModuleButtton = document.getElementById("readWholeModuleButtonOnClick");
     if (wholeModuleButtton) {
         wholeModuleButtton.classList = "bx--btn bx--btn--primary bx--btn--md";
@@ -161,6 +163,41 @@ function displayLinkOptions(links) {
             }
             if (linkTypeString === 'rad' && linkDir === 'inlink') {
                 linkTypeString = 'Har Råd';
+            }
+            // Anpassning	Anpassar / Anpassas av
+            if (linkTypeString === 'anpassar' && linkDir === 'outlink') {
+                linkTypeString = 'Anpassar';
+            }
+            if (linkTypeString === 'anpassar' && linkDir === 'inlink') {
+                linkTypeString = 'Anpassas av';
+            }
+            // Bilaga	Bilaga till / Har bilaga
+            if (linkTypeString === 'bilaga' && linkDir === 'outlink') {
+                linkTypeString = 'Bilaga till';
+            }
+            if (linkTypeString === 'bilaga' && linkDir === 'inlink') {
+                linkTypeString = 'Har bilaga';
+            }
+            // Kontroll	Kontrollerar / Kontrolleras av
+            if (linkTypeString === 'kontrollerar' && linkDir === 'outlink') {
+                linkTypeString = 'Kontrollerar';
+            }
+            if (linkTypeString === 'kontrollerar' && linkDir === 'inlink') {
+                linkTypeString = 'Kontrolleras av';
+            }
+            // Uppfyllnad	Uppfyller / Uppfylls av
+            if (linkTypeString === 'uppfyller' && linkDir === 'outlink') {
+                linkTypeString = 'Uppfyller';
+            }
+            if (linkTypeString === 'uppfyller' && linkDir === 'inlink') {
+                linkTypeString = 'Uppfylls av';
+            }
+            // Ändring	Ändringsbegäran / Ändringsbegärt
+            if (linkTypeString === 'andring' && linkDir === 'outlink') {
+                linkTypeString = 'Ändringsbegäran';
+            }
+            if (linkTypeString === 'andring' && linkDir === 'inlink') {
+                linkTypeString = 'Ändringsbegärt';
             }
             
 
@@ -271,9 +308,10 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
         alert('No links selected for conversion.');
         return;
     }
-    setContainerText("statusContainer", 'Processing Links. Do not reload page.');
+    setContainerText("statusContainer", 'Processing Links.');
 
     let successfulConversions = 0;
+    let currentModuleBinding = [];
 
     for (const selectedGroup of selectedLinks) {
         const linkIndices = selectedGroup.split(",").map(Number);
@@ -281,6 +319,18 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
         for (const linkIndex of linkIndices) {
             const link = widgetHandler.availableLinks[linkIndex];
             const { art: { uri: existingStartUri, moduleUri }, targets, linktype } = link;
+
+            // read moduleBinding for moduleUri, but only if it is not read yet
+            console.log('Module Binding Length:', currentModuleBinding.length);
+            if (currentModuleBinding.length === 0) {
+                try {
+                    currentModuleBinding = await getModuleBinding(moduleUri);
+                } catch (error) {
+                    console.error('Error fetching module binding for link source:', error);
+                    continue;
+                }
+            }
+
             // if linktype is object create RM.LinkTypeDefinition
             let linktypeDng;
             if (typeof linktype === 'object') {
@@ -289,7 +339,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                 linktypeDng = linktype;
             }
 
-            const existingTargetUri = targets[0]?.uri;
+            const existingTargetUri = targets[0]?.uri; // Targets array is flattened to have only one target for each item
             const targetModuleUri = targets[0]?.moduleUri;
             const { componentUri, format } = link.art;
 
@@ -304,19 +354,22 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
             }
 
             try {
-                const startBoundArtifactData = await getModuleBinding(moduleUri);
-                console.log('Start Bound Artifact Data:', startBoundArtifactData);
+                console.log('Start Bound Artifact Data:', currentModuleBinding);
                 console.log('Start URI:', existingStartUri, ' Target URI:', existingTargetUri);
-                const baseStartUri = getBoundArtifactUri(existingStartUri, startBoundArtifactData);
+                const baseStartUri = getBoundArtifactUri(existingStartUri, currentModuleBinding);
                 // if targetModuleUri is null we handle Twisted Link case 
                 // Link starts from Module but links to base artifact
                 let baseTargetUri;
-                if (targetModuleUri !== null) {
-                    const targetBoundArtifactData = await getModuleBinding(targetModuleUri);
-                    baseTargetUri = getBoundArtifactUri(existingTargetUri, targetBoundArtifactData);
-                } else {
+                if (targetModuleUri === null) { // Target is already a Base Artifact, no module binding needed
                     baseTargetUri = existingTargetUri;
+                } else if (targetModuleUri === moduleUri) { // Target is in the same module, we can use the current module binding
+                    const targetModuleBinding = currentModuleBinding;
+                    baseTargetUri = getBoundArtifactUri(existingTargetUri, targetModuleBinding);
+                } else { // Target is in another module we need to get the binding for that module
+                    const targetModuleBinding = await getModuleBinding(targetModuleUri);
+                    baseTargetUri = getBoundArtifactUri(existingTargetUri, targetModuleBinding);
                 }
+                // Create ArtifactRef for the base start and target URIs
                 const baseStartRef = new RM.ArtifactRef(baseStartUri, componentUri, null, format);
                 const baseTargetRef = new RM.ArtifactRef(baseTargetUri, componentUri, null, format);
                 console.log('Base start Uri:', baseStartUri, ' Link Type;', JSON.stringify(linktype),' Target Uri:', baseTargetUri);
@@ -363,7 +416,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
                 });
                 
             } catch (error) {
-                console.error('Error creating base links or fetching module binding for link target:', error);
+                console.error('Error creating base links or fetching module binding for link target:', error.message, error.stack);
                 continue;
             }
 
@@ -380,7 +433,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
 
             successfulConversions++;
             // Print status
-            setContainerText("statusContainer", `Processing Links ${successfulConversions}. Do not reload page.`);
+            setContainerText("statusContainer", `Scanning Links ${successfulConversions}.`);
         }
     }
 
@@ -447,6 +500,59 @@ function setContainerText(containerId, string) {
     adjustHeight();
 }
 
+// Function to get current URI correlator for Legacy URLs
+function fetchCorrelatorData(url, headers, body) {
+    return new Promise((resolve, reject) => {
+        fetch(url, {
+            method: "POST",
+            headers: headers,
+            body: body,
+            credentials: "include" // Sends cookies for authentication
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.log("Correlator error!:", response);
+                reject(new Error(`HTTP error! Status: ${response.status}`));
+            } else {
+                return response.json(); // convert DNG object to regular json object
+            }
+        })
+        .then(cdata => {
+            console.log("Response:", cdata);
+            resolve(cdata); // Resolve with the response data
+        })
+        .catch(error => {
+            console.log("Error:", JSON.stringify(error));
+            reject(error); // Reject with the error
+        });
+    });
+}
+
+async function getCurrentUriCorrelator(legacyUrl) {
+    // Get host Url from browser
+    const hostUrl = window.location.origin;
+    const url = `${hostUrl}/rm/correlator?mode=legacyToCurrent`;
+    const fullUrl = window.location.href;
+    const urlObj = new URL(fullUrl);
+    const params = new URLSearchParams(urlObj.hash.substring(1)); // Extract parameters from the hash part of the URL
+    const vvcConf = params.get('vvc.configuration'); // Ensure vvcConf is declared with const
+
+    const headers = {
+        "Content-Type": "application/json",
+        "DoorsRP-Request-Type": "private",
+        "vvc.configuration": vvcConf
+    };
+
+    const body = JSON.stringify([legacyUrl]); // Input passed dynamically
+    console.log("Correlator Legacy Url:", body);
+
+    try {
+        const cdata = await fetchCorrelatorData(url, headers, body);
+        return cdata; // Return response to the caller
+    } catch (error) {
+        throw error; // Rethrow for caller to handle
+    }
+}
 // Function to get module binding
 async function getModuleBinding(moduleUri) {
     console.log('Fetching module binding for:', moduleUri);
@@ -463,8 +569,49 @@ async function getModuleBinding(moduleUri) {
         if (!response.ok) {
             throw new Error('Failed to fetch module binding. Response status: ' + JSON.stringify(response));
         }
-        console.log('Module Binding Response:', JSON.stringify(response));
-        return response.json();
+
+        // Parse the JSON content from the response
+        const data = await response.json(); // convert DNG object to regular json object
+        let legacyArtifacts = 0;
+
+        // Check if the data contains Legacy objects
+        if (Array.isArray(data)) {
+            console.log("Checking for Legacy items...");
+
+            for (let index = 1; index < data.length; index++) {
+                const item = data[index];
+                if ( // Check if the URI or boundArtifact contains Legacy items, skip for new installations
+                    ( !item.uri.includes("resources/BI_") && !item.uri.includes("resources/TX_") && !item.uri.includes("resources/WR_")) ||
+                    ( !item.boundArtifact.includes("resources/BI_") && !item.boundArtifact.includes("resources/TX_") && !item.boundArtifact.includes("resources/WR_"))
+                ) { // Exclude known non-legacy items
+                    // Get Legacy
+                    legacyArtifacts++;
+                    console.log(`Item ${index} contains Legacy item:`, item.uri);
+                    setContainerText("moduleStatusContainer", `Found ${legacyArtifacts} of ${data.length-1} legacy artifacts in the module. Widget might fail to create Base links for these.`);
+                    // if (index === 3) { // This is just to check the correlator for once
+                        try {
+                            const cdataUri = await getCurrentUriCorrelator(item.uri);
+                            const cdataBinding = await getCurrentUriCorrelator(item.boundArtifact);
+                            console.log('Correlator:', JSON.stringify(cdataUri));
+                            // Update the uri value with the new value from cdata
+                            const newUri = cdataUri[item.uri]; // Extract the new URI from the correlator response
+                            const newBinding = cdataBinding[item.boundArtifact]; // Extract the new URI from the correlator response    
+                            if (newUri) {
+                                item.uri = newUri; // Update the item's URI
+                            }
+                            if (newBinding) {
+                                item.boundArtifact = newBinding; // Update the item's boundArtifact
+                            }
+                        } catch (error) {
+                            console.error('Error in getCurrentUriCorrelator:', error);
+                        }
+                    // }
+                }
+            }
+        } else {
+            console.log("No array found. Full Data:", data);
+        }
+        return data;
     } catch (error) {
         console.error(error);
         throw error;
@@ -479,7 +626,7 @@ function getBoundArtifactUri(artifactUri, moduleBindings) {
     if (binding && binding.boundArtifact) {
         return binding.boundArtifact;
     } else {
-        throw new Error('No bound artifact found for the given artifact URI.');
+        throw new Error(`No bound artifact found for the given artifact URI: ${artifactUri} : In module bindings: ${JSON.stringify(moduleBindings)}`);
     }
 }
 

@@ -25,7 +25,7 @@
 				<script src="js/carbon-components.min.js"></script>
 
                 <!-- Main .js-code -->
-				<script type="text/javascript" src="./js/main_lc_test.js" charset="utf-8"></script> 
+				<script type="text/javascript" src="./js/main_lc.js" charset="utf-8"></script> 
 
                 <style>
                     #container::-webkit-scrollbar {
