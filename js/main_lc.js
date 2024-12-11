@@ -321,7 +321,7 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
             const { art: { uri: existingStartUri, moduleUri }, targets, linktype } = link;
 
             // read moduleBinding for moduleUri, but only if it is not read yet
-            console.log('Module Binding Length:', currentModuleBinding.length);
+            // console.log('Module Binding Length:', currentModuleBinding.length);
             if (currentModuleBinding.length === 0) {
                 try {
                     currentModuleBinding = await getModuleBinding(moduleUri);
@@ -354,8 +354,8 @@ async function convertLinksButtonOnClick(removeModuleLinks) {
             }
 
             try {
-                console.log('Start Bound Artifact Data:', currentModuleBinding);
-                console.log('Start URI:', existingStartUri, ' Target URI:', existingTargetUri);
+                // console.log('Start Bound Artifact Data:', currentModuleBinding);
+                // console.log('Start URI:', existingStartUri, ' Target URI:', existingTargetUri);
                 const baseStartUri = getBoundArtifactUri(existingStartUri, currentModuleBinding);
                 // if targetModuleUri is null we handle Twisted Link case 
                 // Link starts from Module but links to base artifact
@@ -518,11 +518,11 @@ function fetchCorrelatorData(url, headers, body) {
             }
         })
         .then(cdata => {
-            console.log("Response:", cdata);
+            // console.log("Response:", cdata);
             resolve(cdata); // Resolve with the response data
         })
         .catch(error => {
-            console.log("Error:", JSON.stringify(error));
+            console.log("Error:", JSON.stringify(error), "For URL:", url);
             reject(error); // Reject with the error
         });
     });
@@ -555,7 +555,7 @@ async function getCurrentUriCorrelator(legacyUrl) {
 }
 // Function to get module binding
 async function getModuleBinding(moduleUri) {
-    console.log('Fetching module binding for:', moduleUri);
+    // console.log('Fetching module binding for:', moduleUri);
     try {
         const response = await fetch(`${moduleUri}/structure`, {
             method: 'GET',
@@ -620,8 +620,8 @@ async function getModuleBinding(moduleUri) {
 
 // Function to get bound artifact URI aka. Base Artifact
 function getBoundArtifactUri(artifactUri, moduleBindings) {
-    console.log('Fetching bound artifact for:', artifactUri);
-    console.log('Module Bindings in getBoundArtifact:', moduleBindings);
+    // console.log('Fetching bound artifact for:', artifactUri);
+    // console.log('Module Bindings in getBoundArtifact:', moduleBindings);
     const binding = moduleBindings.find(item => item.uri === artifactUri);
     if (binding && binding.boundArtifact) {
         return binding.boundArtifact;
