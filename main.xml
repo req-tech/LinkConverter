@@ -76,12 +76,13 @@
 					<hr style='padding: 0 !important; margin: 0 !important;'/>
 
 					<div class="bx--grid" style="font-size:12px; display: none;" id='instructions_div'>
-						<b><span id='str003'></span> </b> <br/>
+						<b><span id='str003'>How to use this widget?</span> </b> <br/>
 						<ol>
-							<li> <span id='str004a'></span> </li>
-							<li> <span id='str005a'></span> </li>
-							<li> <span id='str006a'></span> </li>
-							<li> <span id='str007a'></span></li>
+							<li> <span id='str004a'>1. Choose link direction to detect from Radio Button Outgoing/Incoming</span> </li>
+							<li> <span id='str004b'>2. Choose either selected artifacts in a module or the whole module</span> </li>
+							<li> <span id='str005a'>3. When the links are found, choose what links you would like to apply widget's functions on</span> </li>
+							<li> <span id='str006a'>4. Choose between 'Add base links' or 'Convert to base links'</span> </li>
+							<li> <span id='str007a'>5. Refresh the page</span></li>
 						</ol>
 
 						<hr style='padding: 0 !important; margin: 0 !important;'/>
@@ -141,7 +142,7 @@
 
 				<div class="bx--grid" style="padding-right:0; padding-left:0; display: none;" id="reloadContainer">
                     <div class="bx--col custom-row">
-						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="reloadButton" onclick="clickRefreshButton()">Reload Page</button>
+						<button class="bx--btn bx--btn--primary bx--btn--md" style="width:100%;max-width:none;" id="reloadButton" onclick="clickRefreshButton()">Refresh</button>
 					</div>
 				</div>
 

@@ -14,19 +14,23 @@ lang_json = `{
     },
     {
       "id": "str004a",
-      "text": "1. Choose either selected artifacts in a module or the whole module"
+      "text": "1. Choose link direction to detect from Radio Button Outgoing/Incoming"
+    },
+    {
+      "id": "str004b",
+      "text": "2. Choose either selected artifacts in a module or the whole module"
     },
     {
       "id": "str005a",
-      "text": "2. When the links are found, choose what links you would like to apply widget's functions on"
+      "text": "3. When the links are found, choose what links you would like to apply widget's functions on"
     },
     {
       "id": "str006a",
-      "text": "3. Choose between 'Add base links' or 'Convert to base links'"
+      "text": "4. Choose between 'Add base links' or 'Convert to base links'"
     },
     {
       "id": "str007a",
-      "text": "4. Reload the page"
+      "text": "5. Refresh the page"
     },
     {
       "id": "str008",
