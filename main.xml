@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Module specificationVersion="1.6_RC">
+<Module specificationVersion="1.7_RC">
 <ModulePrefs title="Link Converter" height="130" scrolling="true">
 	<Require feature="com.ibm.rdm.rm.api"/>
 	<Require feature="dynamic-height"/>
